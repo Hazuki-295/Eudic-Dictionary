@@ -4400,9 +4400,9 @@ h2 .oxford3000 {
 /* mmmc {{{ */
 .OALD9_tab {
     border-bottom: none;
-    top: 75px;
-    /* bottom: 14%; */
-    position: absolute;
+    /* top: 55%!important; */
+    bottom: 14%;
+    position: fixed !important;
     position: -webkit-fixed !important;
     right: -6px;
     bottom: 0x;
@@ -5915,11 +5915,10 @@ span[title="Verb Forms"] .vp {
 .OALECD_audio .sound {
     display: inline-block;
     position: absolute;
-    left: -0.2em;
-    top: 0.05em;
+    left: 0;
     transition: none !important;
     line-height: 1.3em !important;
-    width: 2em !important;
+    width: 1em !important;
 }
 
 .x-g .OALECD_audio .sound { margin-left:0 }
@@ -6843,7 +6842,7 @@ p._br+.trans_blank {
 
 /**/
 .webtop-g h2 {
-    font-family: Bookerly!important;
+    font-family: Optima!important;
 }
 .entry-box-style-heading,
 .collapse .heading,

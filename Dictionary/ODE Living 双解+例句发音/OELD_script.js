@@ -360,7 +360,6 @@
                         $(this).parents('section').find('.sectionswitch').trigger('click.sectionswitch');
                     }
                 })
-                .off('click.senseInnerWrapper') // Add by Hazuki
         }
 
         function addSpeakerToExample() {

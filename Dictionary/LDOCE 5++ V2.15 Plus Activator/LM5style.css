@@ -2586,8 +2586,8 @@ span.neutral + span > .LDOCEVERSIONLOGO_5 {
 }
 
 .mobile .lm5pp_popup {
-    bottom: -1em !important;
-    right: -1em !important;
+    bottom: 50px;
+    right: 10px;
 }
 
 .active.lm5pp_popup {

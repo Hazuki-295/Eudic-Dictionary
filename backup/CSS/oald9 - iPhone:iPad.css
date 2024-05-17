@@ -10,41 +10,6 @@
 @font-face{ font-family:Bookerly; src:local(Bookerly),url(fonts/Bookerly/Bookerly-BoldItalic.ttf); font-style:italic; font-weight:700 }
 */
 
-@font-face {
-    font-family: 'Bookerly';
-    src: url('fonts/Bookerly/Bookerly-Regular.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-}
-
-@font-face {
-    font-family: 'Bookerly';
-    src: url('fonts/Bookerly/Bookerly-Bold.ttf') format('truetype');
-    font-weight: bold;
-    font-style: normal;
-}
-
-@font-face {
-    font-family: 'Bookerly';
-    src: url('fonts/Bookerly/Bookerly-RegularItalic.ttf') format('truetype');
-    font-weight: normal;
-    font-style: italic;
-}
-
-@font-face {
-    font-family: 'Bookerly';
-    src: url('fonts/Bookerly/Bookerly-BoldItalic.ttf') format('truetype');
-    font-weight: bold;
-    font-style: italic;
-}
-
-@font-face {
-    font-family: 'Source Han Serif CN';
-    src: url('fonts/SourceHanSerifCN/SourceHanSerifCN-Regular.otf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-}
-
 .entry {
     font-family: Bookerly,Georgia,"FZYouSongJ GBK 508R","Source Han Serif CN",Helvetica,"Open Sans",Arial,sans-serif;
     color: #000;
@@ -5951,10 +5916,9 @@ span[title="Verb Forms"] .vp {
     display: inline-block;
     position: absolute;
     left: 0;
-    top: 0.05em;
     transition: none !important;
     line-height: 1.3em !important;
-    width: 2em !important;
+    width: 1em !important;
 }
 
 .x-g .OALECD_audio .sound { margin-left:0 }
@@ -6878,7 +6842,7 @@ p._br+.trans_blank {
 
 /**/
 .webtop-g h2 {
-    font-family: Bookerly!important;
+    font-family: Optima!important;
 }
 .entry-box-style-heading,
 .collapse .heading,

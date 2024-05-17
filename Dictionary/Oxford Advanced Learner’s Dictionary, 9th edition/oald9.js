@@ -1,91 +1,5 @@
 /// remove Eudict header info
 setTimeout(function(){var e=document.getElementById('wordInfoHead');e&&e.remove()},0);
-/* setTimeout(function() {
-    var e = document.getElementById('wordInfoHead');
-    if (e) {
-        // Create the HTML copy button
-        var htmlButton = document.createElement('button');
-        htmlButton.textContent = 'Copy HTML';
-        htmlButton.onclick = function() {
-            var textarea = document.createElement('textarea');
-            textarea.value = document.documentElement.outerHTML;
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textarea);
-            alert('HTML content copied to clipboard!');
-        };
-
-        // Create the CSS copy button
-        var cssButton = document.createElement('button');
-        cssButton.textContent = 'Copy CSS URLs';
-        cssButton.onclick = function() {
-            var cssUrls = collectExternalCSS();
-            var textarea = document.createElement('textarea');
-            textarea.value = cssUrls;
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textarea);
-            alert('CSS URLs copied to clipboard!');
-        };
-
-        // Clear existing content and append buttons
-        e.innerHTML = '';
-        e.appendChild(htmlButton);
-        e.appendChild(document.createTextNode(" ")); // Add space between buttons
-        e.appendChild(cssButton);
-    }
-}, 0);
-
-function collectExternalCSS() {
-    var urls = [];
-    var sheets = document.styleSheets;
-    for (var i = 0; i < sheets.length; i++) {
-        if (sheets[i].href) {
-            urls.push(sheets[i].href);
-        }
-    }
-    return urls.join('\n');
-} */
-
-document.addEventListener('DOMContentLoaded', function() {
-    if (window.scriptExecuted) return;
-    window.scriptExecuted = true;
-
-    const elementsSelector = '.x-gs, .collapse';
-    const toggleVisibility = (elements, display) => elements.forEach(e => e.style.display = display);
-
-    setTimeout(function() {
-        // Expand all collapsible elements with the specified title
-        var collapseElements = document.querySelectorAll('.collapse[title="Oxford Collocations Dictionary"] .heading');
-        collapseElements.forEach(function(headingElement) {
-            headingElement.click();
-        });
-
-        // Hide elements with the specified class by default
-        // document.querySelectorAll(elementsSelector).forEach(e => e.style.display = 'none');
-
-        // Add click event listeners to elements with the specified class
-        document.querySelectorAll('.def.translation_individual').forEach(element => {
-            element.addEventListener('click', function() {
-                const elements = this.parentElement.querySelectorAll(elementsSelector);
-                const display = elements[0].style.display === 'none' ? 'block' : 'none';
-                toggleVisibility(elements, display);
-            });
-        });
-
-        // Add click event listener to the gear menu
-        const gearMenu = document.getElementById('_OALD9_gear');
-        if (gearMenu) {
-            gearMenu.addEventListener('click', function() {
-                const elements = document.querySelectorAll(elementsSelector);
-                const display = elements[0].style.display === 'none' ? 'block' : 'none';
-                toggleVisibility(elements, display);
-            });
-        }
-    }, 0);
-});
 
 ////////////////////////////////== Settings ==\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 /// @个性设置: 默认例句发音: 1:英式, 2:美式
@@ -95,7 +9,7 @@ var _OALD9_DEFAULT_PRON = 1;
 var _OALD9_AUTO_TABSHIDE_ON = 1;
 
 /// @个性设置: 默认中文显示级别: 0:不显示, 1:显示释义中文, 2:显示释义中文+例句中文
-var _OALD9_TRANS_LEVEL = 2;
+var _OALD9_TRANS_LEVEL = 1;
 
 /// @个性设置: 例句中文换行： 0:不换行, 1:换行
 var _OALD9_BREAK_EXPCN = 1;
