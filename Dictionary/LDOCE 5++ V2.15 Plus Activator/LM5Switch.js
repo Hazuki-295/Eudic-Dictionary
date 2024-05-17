@@ -178,6 +178,8 @@ LDOCE 5++
             if (/eudic/i.test(_userAgent)) {
                 _class += ' eudicnt';
             }
+        } else if (_userAgent.indexOf('ipad') > -1 && _userAgent.indexOf('_mac_') > -1) {
+            _class += ' macos_ipad_sim';
         } else if (/Macintosh/i.test(_userAgent)) {
             _class += ' macos desktop';
             if (/eudic/i.test(_userAgent)) {

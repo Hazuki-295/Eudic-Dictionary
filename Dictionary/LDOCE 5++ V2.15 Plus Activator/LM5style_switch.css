@@ -1,7 +1,9 @@
 .pagetitle{background-repeat:repeat-y;}
+/*
 .EXAMPLE .cn_txt, .Error .cn_txt,.cn_txt {
 	display:none;
 }
+*/
 
 .lm5ppMenu_title .cn_title {
 	-webkit-transform: translateY(100%);
