@@ -354,12 +354,12 @@
 
             $('.entryWrapper > section > .senseInnerWrapper', '.OELDBody')
                 .off('click.senseInnerWrapper')
-                .on('click.senseInnerWrapper', function (event) {
+                /* .on('click.senseInnerWrapper', function (event) {
                     if (($(event.target).css("display") == "block")
                         || $(event.target).is('.editorial_note')) {
                         $(this).parents('section').find('.sectionswitch').trigger('click.sectionswitch');
                     }
-                })
+                }) */
         }
 
         function addSpeakerToExample() {
