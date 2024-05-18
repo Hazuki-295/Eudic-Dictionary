@@ -4411,6 +4411,12 @@ h2 .oxford3000 {
     opacity: 0;
     pointer-events: none;
 }
+/* Override for MacOS running iPad app */
+.macos_ipad_sim .OALD9_tab {
+    top: 75px;
+    bottom: auto;
+    position: absolute !important;
+}
 .OALD9_online[data-tabbed] .OALD9_tab {
     opacity: 1;
     pointer-events: initial;
