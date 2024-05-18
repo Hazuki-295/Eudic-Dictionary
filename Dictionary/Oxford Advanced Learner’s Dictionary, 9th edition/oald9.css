@@ -5924,7 +5924,9 @@ span[title="Verb Forms"] .vp {
     left: 0;
     transition: none !important;
     line-height: 1.3em !important;
-    width: 1em !important;
+    width: 2em !important;
+    top: 1px;
+    margin-left: -3px !important;
 }
 
 .x-g .OALECD_audio .sound { margin-left:0 }
@@ -6848,7 +6850,7 @@ p._br+.trans_blank {
 
 /**/
 .webtop-g h2 {
-    font-family: Optima!important;
+    font-family: Bookerly!important;
 }
 .entry-box-style-heading,
 .collapse .heading,
