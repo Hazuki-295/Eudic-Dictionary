@@ -1,5 +1,30 @@
 @charset "UTF-8";
 /*main-1jiqlm8.css*/
+
+/* Open Sans - Variable Font */
+@font-face {
+    font-family: 'Open Sans';
+    src: local('Open Sans'), url('fonts/Open_Sans/OpenSans-VariableFont_wdth,wght.ttf') format('truetype');
+    font-weight: 300 800;
+    font-style: normal;
+}
+
+/* Open Sans Italic - Variable Font */
+@font-face {
+    font-family: 'Open Sans';
+    src: local('Open Sans'), url('fonts/Open_Sans/OpenSans-Italic-VariableFont_wdth,wght.ttf') format('truetype');
+    font-weight: 300 800;
+    font-style: italic;
+}
+
+/* Merriweather - Bold */
+@font-face {
+    font-family: 'Merriweather';
+    src: local('Merriweather'), url('fonts/Merriweather/Merriweather-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+}
+
 * {
     box-sizing: border-box;
     -ms-box-sizing: border-box;

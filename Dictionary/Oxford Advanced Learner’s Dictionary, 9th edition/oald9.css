@@ -10,6 +10,46 @@
 @font-face{ font-family:Bookerly; src:local(Bookerly),url(fonts/Bookerly/Bookerly-BoldItalic.ttf); font-style:italic; font-weight:700 }
 */
 
+/* Bookerly - Regular */
+@font-face {
+    font-family: 'Bookerly';
+    src: local('Bookerly'), url('fonts/Bookerly/Bookerly-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+}
+
+/* Bookerly - Bold */
+@font-face {
+    font-family: 'Bookerly';
+    src: local('Bookerly'), url('fonts/Bookerly/Bookerly-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+}
+
+/* Bookerly - Italic */
+@font-face {
+    font-family: 'Bookerly';
+    src: local('Bookerly'), url('fonts/Bookerly/Bookerly-RegularItalic.ttf') format('truetype');
+    font-weight: 400;
+    font-style: italic;
+}
+
+/* Bookerly - Bold Italic */
+@font-face {
+    font-family: 'Bookerly';
+    src: local('Bookerly'), url('fonts/Bookerly/Bookerly-BoldItalic.ttf') format('truetype');
+    font-weight: 700;
+    font-style: italic;
+}
+
+/* Source Han Serif CN - Regular */
+@font-face {
+    font-family: 'Source Han Serif CN';
+    src: local('Source Han Serif CN'), url('fonts/SourceHanSerifCN/SourceHanSerifCN-Regular.otf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+}
+
 .entry {
     font-family: Bookerly,Georgia,"FZYouSongJ GBK 508R","Source Han Serif CN",Helvetica,"Open Sans",Arial,sans-serif;
     color: #000;
