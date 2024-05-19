@@ -50,6 +50,75 @@
     font-style: normal;
 }
 
+/* custom console CSS */
+#customConsole {
+    font-family: Menlo, Consolas, monospace;
+    background-color: #F5F5F5;
+    color: #333;
+    padding: 10px;
+    border-radius: 5px;
+    width: 90%;
+    margin: 5px auto;
+}
+#consoleOutput {
+    background-color: #FFF;
+    border: 1px solid #CCC;
+    padding: 10px;
+    height: 300px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    margin-bottom: 10px;
+}
+#consoleInput {
+    background-color: #FFF;
+    border: 1px solid #CCC;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 10px;
+    color: #333;
+    margin-bottom: 10px;
+}
+#customConsole button {
+    padding: 10px 20px;
+    background-color: #007ACC;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-right: 5px;
+}
+#customConsole button:hover {
+    background-color: #005A9E;
+}
+._log, ._error, ._input, ._output, ._undefined {
+    white-space: pre-wrap;
+    padding: 2px 5px;
+}
+._log { color: #333; }
+._error {
+    color: #333;
+    background-color: #FFECEC;
+    padding: 2px 5px;
+    border-radius: 5px;
+    display: inline-block;
+    width: 100%;
+}
+._input { color: #4169E1; }
+._input::before {
+    content: '> ';
+    color: #4169E1;
+}
+._output { color: #E4544C; }
+._output::before{
+    content: '* ';
+    color: #E4544C;
+}
+._undefined { color: #888; }
+._undefined::before {
+    content: '* ';
+    color: #888;
+}
+
 .entry {
     font-family: Bookerly,Georgia,"FZYouSongJ GBK 508R","Source Han Serif CN",Helvetica,"Open Sans",Arial,sans-serif;
     color: #000;

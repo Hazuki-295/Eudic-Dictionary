@@ -1,6 +1,124 @@
 /// remove Eudict header info
 setTimeout(function(){var e=document.getElementById('wordInfoHead');e&&e.remove()},0);
 
+document.addEventListener('DOMContentLoaded', function () {
+    const debug = false;
+
+    if (!debug) { return; }
+
+    const container = document.createElement('div');
+    container.innerHTML = `
+        <div id="customConsole">
+            <div id="consoleOutput"></div>
+            <textarea id="consoleInput" placeholder="Type JavaScript code here..."></textarea>
+            <div id="buttons" style="display: flex; align-items: center;">
+                <button id="loadButton">Load Code</button>
+                <button id="executeButton">Execute</button>
+                <div class="spacer" style="flex-grow: 1;"></div>
+                <button id="copyButton">Copy HTML</button>
+            </div>
+        </div>
+    `;
+
+    var oald = document.querySelector('.OALD9_online');
+    oald.insertBefore(container, oald.firstChild);
+
+    const consoleOutput = document.getElementById('consoleOutput');
+    const consoleInput = document.getElementById('consoleInput');
+    const loadButton = document.getElementById('loadButton');
+    const executeButton = document.getElementById('executeButton');
+    const copyButton = document.getElementById('copyButton');
+
+    // Override console.log
+    const originalConsoleLog = console.log;
+    console.log = function (...args) {
+        originalConsoleLog.apply(console, args);
+        args.forEach(arg => {
+            appendToConsoleOutput(formatMessage(arg), '_log');
+        });
+    };
+
+    // Function to format messages
+    function formatMessage(message) {
+        if (typeof message === 'object') {
+            return JSON.stringify(message, null, 2);
+        } else {
+            return String(message);
+        }
+    }
+
+    // Function to append messages to the custom console
+    function appendToConsoleOutput(message, type) {
+        const newMessage = document.createElement('div');
+        newMessage.className = type;
+        newMessage.textContent = message;
+        consoleOutput.appendChild(newMessage);
+        consoleOutput.scrollTop = consoleOutput.scrollHeight;
+    }
+
+    // Capture errors
+    window.onerror = function (message, source, lineno, colno, error) {
+        appendToConsoleOutput(`Error: ${message} at ${source}:${lineno}:${colno}`, '_error');
+    };
+
+    // Load code from a URL
+    loadButton.addEventListener('click', function () {
+        const staticUrl = 'console.txt';
+        fetch(staticUrl)
+            .then(response => {
+                if (!response.ok) {
+                    appendToConsoleOutput(`Error: HTTP error status ${response.status}`, '_error');
+                } else {
+                    consoleInput.value = response.text().trim();
+                    appendToConsoleOutput(`Loaded code from ${staticUrl}`, '_log');
+                }
+            })
+            .catch(error => {
+                appendToConsoleOutput(`Error: ${error.message}`, '_error');
+            });
+    });
+
+    // Execute code from the input field
+    executeButton.addEventListener('click', function () {
+        const code = consoleInput.value.trim();
+        if (code) {
+            appendToConsoleOutput(code, '_input');
+            try {
+                const result = eval(code);
+                if (result === undefined) {
+                    appendToConsoleOutput('undefined', '_undefined');
+                } else {
+                    appendToConsoleOutput(formatMessage(result), '_output');
+                }
+            } catch (error) {
+                appendToConsoleOutput(`Error: ${error.message}`, '_error');
+            }
+            consoleInput.value = '';
+        }
+    });
+
+    // Copy the entire HTML content
+    copyButton.addEventListener('click', function () {
+        // Get the entire HTML content
+        const htmlContent = document.documentElement.outerHTML;
+
+        // Create a temporary textarea element
+        const textarea = document.createElement('textarea');
+        textarea.value = htmlContent;
+        document.body.appendChild(textarea);
+
+        // Select the content and copy it to the clipboard
+        textarea.select();
+        document.execCommand('copy');
+
+        // Remove the temporary textarea element
+        document.body.removeChild(textarea);
+
+        // Optionally, alert the user that the content has been copied
+        appendToConsoleOutput('HTML content copied to clipboard!', '_log');
+    });
+});
+
 ////////////////////////////////== Settings ==\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 /// @个性设置: 默认例句发音: 1:英式, 2:美式
 var _OALD9_DEFAULT_PRON = 1;
