@@ -66,12 +66,15 @@ document.addEventListener('DOMContentLoaded', function () {
         const staticUrl = 'console.txt';
         fetch(staticUrl)
             .then(response => {
-                if (!response.ok) {
-                    appendToConsoleOutput(`Error: HTTP error status ${response.status}`, '_error');
+                if (!response.ok && response.status !== 0) {
+                    throw new Error(`HTTP error status ${response.status}`);
                 } else {
-                    consoleInput.value = response.text().trim();
-                    appendToConsoleOutput(`Loaded code from ${staticUrl}`, '_log');
+                    return response.text();
                 }
+            })
+            .then(text => {
+                consoleInput.value = text.trim();
+                appendToConsoleOutput(`Loaded code from ${staticUrl}`, '_log');
             })
             .catch(error => {
                 appendToConsoleOutput(`Error: ${error.message}`, '_error');
