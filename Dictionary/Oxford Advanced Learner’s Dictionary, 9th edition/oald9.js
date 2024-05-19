@@ -119,6 +119,42 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
+document.addEventListener('DOMContentLoaded', () => {
+    if (window.scriptExecuted) return;
+    window.scriptExecuted = true;
+
+    const elementsSelector = '.x-gs, .collapse';
+    const toggleVisibility = (elements, display) => elements.forEach(e => e.style.display = display);
+
+    // Expand all collapsible elements with the specified title
+    document.querySelectorAll('.collapse[title="Oxford Collocations Dictionary"] .heading')
+        .forEach(headingElement => headingElement.click());
+
+    // Hide elements with the specified class by default
+    // document.querySelectorAll(elementsSelector).forEach(e => e.style.display = 'none');
+
+    // Add click event listeners to elements with the specified class
+    setTimeout(() => {
+        document.querySelectorAll('.def.translation_individual').forEach(element => {
+            element.addEventListener('click', function () {
+                const elements = this.parentElement.querySelectorAll(elementsSelector);
+                const display = elements[0].style.display === 'none' ? 'block' : 'none';
+                toggleVisibility(elements, display);
+            });
+        });
+    }, 0);
+
+    // Add click event listener to the gear menu
+    const gearMenu = document.getElementById('_OALD9_gear');
+    if (gearMenu) {
+        gearMenu.addEventListener('click', function () {
+            const elements = document.querySelectorAll(elementsSelector);
+            const display = elements[0].style.display === 'none' ? 'block' : 'none';
+            toggleVisibility(elements, display);
+        });
+    }
+});
+
 ////////////////////////////////== Settings ==\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 /// @个性设置: 默认例句发音: 1:英式, 2:美式
 var _OALD9_DEFAULT_PRON = 1;
@@ -127,7 +163,7 @@ var _OALD9_DEFAULT_PRON = 1;
 var _OALD9_AUTO_TABSHIDE_ON = 1;
 
 /// @个性设置: 默认中文显示级别: 0:不显示, 1:显示释义中文, 2:显示释义中文+例句中文
-var _OALD9_TRANS_LEVEL = 1;
+var _OALD9_TRANS_LEVEL = 2;
 
 /// @个性设置: 例句中文换行： 0:不换行, 1:换行
 var _OALD9_BREAK_EXPCN = 1;
