@@ -277,7 +277,7 @@ function oald9(){
     _OALD9_AUTO_TABSHIDE_ON && setTimeout(_cbScrollToHideTabs, 0);
 
     const _userAgent = navigator.userAgent.toLowerCase();
-    const macos_ipad_sim = _userAgent.indexOf('ipad') > -1 && _userAgent.indexOf('_mac_') > -1;
+    const macos_ipad_sim = _userAgent.indexOf('ipad') > -1 && navigator.maxTouchPoints === 0;
 
     for (var i=0, l=oalds.length; i<l; ++i){
         if (macos_ipad_sim) {
