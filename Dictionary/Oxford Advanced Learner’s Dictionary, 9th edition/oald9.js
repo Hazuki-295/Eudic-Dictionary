@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <button id="loadButton">Load Code</button>
                 <button id="executeButton">Execute</button>
                 <div class="spacer" style="flex-grow: 1;"></div>
+                <button id="clearButton">Clear</button>
                 <button id="copyButton">Copy HTML</button>
             </div>
         </div>
@@ -23,6 +24,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const consoleInput = document.getElementById('consoleInput');
     const loadButton = document.getElementById('loadButton');
     const executeButton = document.getElementById('executeButton');
+    const clearButton = document.getElementById('clearButton');
     const copyButton = document.getElementById('copyButton');
 
     // Override console.log
@@ -48,12 +50,43 @@ document.addEventListener('DOMContentLoaded', function () {
         const newMessage = document.createElement('div');
         newMessage.className = type;
         newMessage.textContent = message;
+        newMessage.style.position = 'relative';
+
+        if (type !== '_input') {
+            const copyButton = document.createElement('button');
+            copyButton.textContent = 'Copy';
+            copyButton.style.position = 'absolute';
+            copyButton.style.height = '20px';
+            copyButton.style.right = '-1em';
+            copyButton.style.top = '0';
+            copyButton.style.bottom = '0';
+            copyButton.style.margin = 'auto';
+            copyButton.style.marginRight = '1.5em';
+            copyButton.style.padding = '2px 10px';
+            copyButton.style.visibility = 'hidden';
+            copyButton.style.opacity = '0.9';
+            copyButton.addEventListener('click', function () {
+                navigator.clipboard.writeText(message);
+            });
+
+            newMessage.appendChild(copyButton);
+
+            newMessage.addEventListener('mouseover', function () {
+                copyButton.style.visibility = 'visible';
+            });
+
+            newMessage.addEventListener('mouseout', function () {
+                copyButton.style.visibility = 'hidden';
+            });
+        }
+
         consoleOutput.appendChild(newMessage);
         consoleOutput.scrollTop = consoleOutput.scrollHeight;
     }
 
     // Capture errors
     window.onerror = function (message, source, lineno, colno, error) {
+        if (source.indexOf('EuDic.app/Html') > -1) { return; } // Ignore errors from Eudic
         appendToConsoleOutput(`Error: ${message} at ${source}:${lineno}:${colno}`, '_error');
     };
 
@@ -94,6 +127,14 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             consoleInput.value = '';
         }
+    });
+
+    // Add a 'click' event listener to the 'Clear' button
+    clearButton.addEventListener('click', function () {
+        while (consoleOutput.firstChild) {
+            consoleOutput.removeChild(consoleOutput.firstChild);
+        }
+        consoleInput.value = ''
     });
 
     // Copy the entire HTML content
