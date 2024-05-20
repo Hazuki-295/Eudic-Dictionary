@@ -4,10 +4,11 @@ setTimeout(function(){var e=document.getElementById('wordInfoHead');e&&e.remove(
 function loadCustomConsole() {
     const container = document.createElement('div');
     container.innerHTML = `
-        <div id="customConsole">
+        <div id="customConsole" class="hidden">
             <div id="consoleOutput"></div>
             <div id="consoleInput" style="height: 100px;"></div>
             <div class="buttons">
+                <button id="clearButton">Clear</button>
                 <div class="spacer" style="flex-grow: 1;"></div>
                 <button id="executeButton">Execute</button>
             </div>
@@ -17,7 +18,7 @@ function loadCustomConsole() {
                     <button id="loadButton">Load Code</button>
                 </div>
                 <div class="spacer" style="flex-grow: 1;"></div>
-                <button id="clearButton">Clear</button>
+                <button id="copyConsoleTextButton">Copy Console</button>
                 <button id="copyButton">Copy HTML</button>
             </div>
         </div>
@@ -32,9 +33,11 @@ function loadCustomConsole() {
     const clearButton = document.getElementById('clearButton');
     const copyButton = document.getElementById('copyButton');
     const autocompleteButton = document.getElementById('autocompleteButton');
+    const copyConsoleTextButton = document.getElementById('copyConsoleTextButton');
 
     const consoleInput = CodeMirror(document.getElementById('consoleInput'), {
         lineNumbers: true,
+        lineWrapping: true,
         mode: 'javascript',
         extraKeys: {
             'Tab': 'autocomplete'
@@ -42,8 +45,8 @@ function loadCustomConsole() {
     });
 
     const codeMirror = document.querySelector('.CodeMirror');
-    codeMirror.style.height = '100%';
-    codeMirror.style.wdith = '100%';
+    codeMirror.style.maxHeight = '100%';
+    codeMirror.style.maxWdith = '100%';
 
     const _userAgent = navigator.userAgent.toLowerCase();
     const macos_ipad_sim = _userAgent.indexOf('ipad') > -1 && navigator.maxTouchPoints === 0;
@@ -186,6 +189,26 @@ function loadCustomConsole() {
         // Optionally, alert the user that the content has been copied
         appendToConsoleOutput('HTML content copied to clipboard!', '_log');
     });
+
+    // Copy the entire console content
+    copyConsoleTextButton.addEventListener('click', function() {
+        const consoleText = consoleOutput.innerText;
+    
+        // Create a temporary textarea element
+        const textarea = document.createElement('textarea');
+        textarea.value = consoleText;
+        document.body.appendChild(textarea);
+    
+        // Select the content and copy it to the clipboard
+        textarea.select();
+        document.execCommand('copy');
+    
+        // Remove the temporary textarea element
+        document.body.removeChild(textarea);
+
+        // Optionally, alert the user that the content has been copied
+        appendToConsoleOutput('Console content copied to clipboard!', '_log');
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -268,10 +291,9 @@ Promise.all([
     loadResource('js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/addon/hint/javascript-hint.min.js'),
     loadResource('css', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/addon/hint/show-hint.min.css')
 ]).then(() => {
-    _setupGears();
-
     if (!window.__OALD9_contentLoadedOnce) {
         window.__OALD9_contentLoadedOnce = true;
+        _setupGears();
         window.addEventListener('DOMContentLoaded', oald9);
     }
 }).catch((error) => {
@@ -381,8 +403,9 @@ function oald9(){
     const _userAgent = navigator.userAgent.toLowerCase();
     const macos_ipad_sim = _userAgent.indexOf('ipad') > -1 && navigator.maxTouchPoints === 0;
 
-    customConsole = document.getElementById('customConsole');
-    customConsole.style.display = _OALD9_Custom_Console === 1 ? 'block' : 'none';
+    const customConsole = document.getElementById('customConsole');
+    customConsole.classList.toggle('visible', _OALD9_Custom_Console === 1);
+    customConsole.classList.toggle('hidden', _OALD9_Custom_Console !== 1);
 
     for (var i=0, l=oalds.length; i<l; ++i){
         if (macos_ipad_sim) {
@@ -772,8 +795,9 @@ function _setGear(key, value) {
         case 'customConsole':
             db.setItem('o9ol_7', ''+value);
             _OALD9_Custom_Console = value;
-            customConsole = document.getElementById('customConsole');
-            customConsole.style.display = value === 1 ? 'block' : 'none';
+            const customConsole = document.getElementById('customConsole');
+            customConsole.classList.toggle('visible', value === 1);
+            customConsole.classList.toggle('hidden', value !== 1);
             break;
         case 'fontSize':
             db.setItem('o9ol_4', ''+value);

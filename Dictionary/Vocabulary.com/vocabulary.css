@@ -231,7 +231,7 @@ button.edit:before, .button.edit:before {
 
 html a.audio {
     text-decoration: none !important;
-    color: #999;
+    color: var(--blue-3);;
     white-space: nowrap;
     display: inline;
     font-size: 18px;
