@@ -2,10 +2,6 @@
 setTimeout(function(){var e=document.getElementById('wordInfoHead');e&&e.remove()},0);
 
 document.addEventListener('DOMContentLoaded', function () {
-    const debug = false;
-
-    if (!debug) { return; }
-
     const container = document.createElement('div');
     container.innerHTML = `
         <div id="customConsole">
@@ -150,11 +146,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Add click event listener to the gear menu
     const gearMenu = document.getElementById('_OALD9_gear');
     if (gearMenu) {
-        gearMenu.addEventListener('click', function () {
-            const elements = document.querySelectorAll(elementsSelector);
-            const display = elements[0].style.display === 'none' ? 'block' : 'none';
-            toggleVisibility(elements, display);
-        });
+        const gearHead = gearMenu.querySelector('._gear-ico');
+        if (gearHead) {
+            gearHead.addEventListener('click', function () {
+                const elements = document.querySelectorAll(elementsSelector);
+                const display = elements[0].style.display === 'none' ? 'block' : 'none';
+                toggleVisibility(elements, display);
+            });
+        }
     }
 });
 
@@ -177,6 +176,8 @@ var _OALD9_FONTSIZE = 2;
 /// @个性设置: 主题色彩: 1:白，2:棕褐色, 3:绿色护眼
 var _OALD9_THEME = 1;
 
+/// @Debug: Custom Console: 0:隐藏, 1:显示
+var _OALD9_Custom_Console = 0;
 
 var _OALD9_SCROLLTOP_POS = 50; // 回滚顶部位置: iPhoneX:50, iPhone11:54, iPhone:28
 var _OALD9_AUTO_TABSHIDE_POS = 160; // 如果启用自动隐藏词性切换功能，此值用于设置当 O9 显示在屏幕可视区域内的高度(px)小于此值时，自动隐藏词性切换按钮
@@ -278,6 +279,9 @@ function oald9(){
 
     const _userAgent = navigator.userAgent.toLowerCase();
     const macos_ipad_sim = _userAgent.indexOf('ipad') > -1 && navigator.maxTouchPoints === 0;
+
+    customConsole = document.getElementById('customConsole');
+    customConsole.style.display = _OALD9_Custom_Console === 1 ? 'block' : 'none';
 
     for (var i=0, l=oalds.length; i<l; ++i){
         if (macos_ipad_sim) {
@@ -601,6 +605,7 @@ function _setupGears() {
     _OALD9_FONTSIZE = G.fontSize;
     _OALD9_THEME = G.theme;
     _OALD9_DEFAULT_PRON = G.pron;
+    _OALD9_Custom_Console = G.customConsole;
 
     _setupGearMenu();
 }
@@ -613,7 +618,8 @@ function _getGear(key) {
         breakCN: null === db.getItem('o9ol_3') ? _OALD9_BREAK_EXPCN : parseInt(db.getItem('o9ol_3')),
         fontSize: null === db.getItem('o9ol_4') ? _OALD9_FONTSIZE : parseInt(db.getItem('o9ol_4')),
         theme: null === db.getItem('o9ol_5') ? _OALD9_THEME : parseInt(db.getItem('o9ol_5')),
-        pron: null === db.getItem('o9ol_6') ? _OALD9_DEFAULT_PRON : parseInt(db.getItem('o9ol_6'))
+        pron: null === db.getItem('o9ol_6') ? _OALD9_DEFAULT_PRON : parseInt(db.getItem('o9ol_6')),
+        customConsole: null === db.getItem('o9ol_7') ? _OALD9_Custom_Console : parseInt(db.getItem('o9ol_7'))
     };
 
     switch (key) {
@@ -623,6 +629,7 @@ function _getGear(key) {
         case 'fontSize': return null === db.getItem('o9ol_4') ? _OALD9_FONTSIZE : parseInt(db.getItem('o9ol_4'));
         case 'theme': return null === db.getItem('o9ol_5') ? _OALD9_THEME : parseInt(db.getItem('o9ol_5'));
         case 'pron': return null === db.getItem('o9ol_6') ? _OALD9_DEFAULT_PRON : parseInt(db.getItem('o9ol_6'));
+        case 'customConsole': return null === db.getItem('o9ol_7') ? _OALD9_Custom_Console : parseInt(db.getItem('o9ol_7'));
     }
 
     return null;
@@ -660,6 +667,12 @@ function _setGear(key, value) {
                 window.addEventListener('scroll', _evScrollToHideTabs);
                 _cbScrollToHideTabs(); // check & show OR hide
             }
+            break;
+        case 'customConsole':
+            db.setItem('o9ol_7', ''+value);
+            _OALD9_Custom_Console = value;
+            customConsole = document.getElementById('customConsole');
+            customConsole.style.display = value === 1 ? 'block' : 'none';
             break;
         case 'fontSize':
             db.setItem('o9ol_4', ''+value);
@@ -723,6 +736,13 @@ function _setupGearMenu() {
                 '<div class="_gear-igs">' +
                     '<span data-cmd="autoHideTabs" data-v="1"'+(G.autoHideTabs===1?' data-checked="1"':'')+'>yes</span>' +
                     '<span data-cmd="autoHideTabs" data-v="0"'+(G.autoHideTabs===0?' data-checked="1"':'')+'>no</span>' +
+                '</div>' +
+            '</div>' +
+            '<div class="_gear-g custom-console">' +
+                '<div class="_gear-lb">show custom console</div>' +
+                '<div class="_gear-igs">' +
+                    '<span data-cmd="customConsole" data-v="1"'+(G.customConsole===1?' data-checked="1"':'')+'>yes</span>' +
+                    '<span data-cmd="customConsole" data-v="0"'+(G.customConsole===0?' data-checked="1"':'')+'>no</span>' +
                 '</div>' +
             '</div>' +
             '<div class="_gear-g auto-tabs">' +
