@@ -64,7 +64,9 @@
     background-color: #FFF;
     border: 1px solid #CCC;
     padding: 10px;
+    box-sizing: border-box;
     height: 300px;
+    width: 100%;
     overflow-y: auto;
     white-space: pre-wrap;
     margin-bottom: 10px;
@@ -74,12 +76,11 @@
     border: 1px solid #CCC;
     box-sizing: border-box;
     width: 100%;
-    padding: 10px;
     color: #333;
     margin-bottom: 10px;
 }
 #customConsole button {
-    padding: 10px 20px;
+    padding: 8px 16px;
     background-color: #007ACC;
     color: white;
     border: none;
@@ -90,9 +91,30 @@
 #customConsole button:hover {
     background-color: #005A9E;
 }
+.buttons {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+}
+.toggle-buttons {
+    position: relative;
+    width: 120px;
+    height: 31.5px;
+}
+.toggle-buttons button {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    visibility: hidden;
+}
+.toggle-buttons button.active {
+    visibility: visible;
+}
 ._log, ._error, ._input, ._output, ._undefined {
     white-space: pre-wrap;
     padding: 2px 5px;
+    display: inline-block;
+    width: 100%;
 }
 ._log { color: #333; }
 ._error {
@@ -100,8 +122,6 @@
     background-color: #FFECEC;
     padding: 2px 5px;
     border-radius: 5px;
-    display: inline-block;
-    width: 100%;
 }
 ._input { color: #4169E1; }
 ._input::before {

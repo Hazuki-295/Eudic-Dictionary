@@ -1,15 +1,21 @@
 /// remove Eudict header info
 setTimeout(function(){var e=document.getElementById('wordInfoHead');e&&e.remove()},0);
 
-document.addEventListener('DOMContentLoaded', function () {
+function loadCustomConsole() {
     const container = document.createElement('div');
     container.innerHTML = `
         <div id="customConsole">
             <div id="consoleOutput"></div>
-            <textarea id="consoleInput" placeholder="Type JavaScript code here..."></textarea>
-            <div id="buttons" style="display: flex; align-items: center;">
-                <button id="loadButton">Load Code</button>
+            <div id="consoleInput" style="height: 100px;"></div>
+            <div class="buttons">
+                <div class="spacer" style="flex-grow: 1;"></div>
                 <button id="executeButton">Execute</button>
+            </div>
+            <div class="buttons">
+                <div class="toggle-buttons">
+                    <button id="autocompleteButton">Autocomplete</button>
+                    <button id="loadButton">Load Code</button>
+                </div>
                 <div class="spacer" style="flex-grow: 1;"></div>
                 <button id="clearButton">Clear</button>
                 <button id="copyButton">Copy HTML</button>
@@ -21,11 +27,54 @@ document.addEventListener('DOMContentLoaded', function () {
     oald.insertBefore(container, oald.firstChild);
 
     const consoleOutput = document.getElementById('consoleOutput');
-    const consoleInput = document.getElementById('consoleInput');
     const loadButton = document.getElementById('loadButton');
     const executeButton = document.getElementById('executeButton');
     const clearButton = document.getElementById('clearButton');
     const copyButton = document.getElementById('copyButton');
+    const autocompleteButton = document.getElementById('autocompleteButton');
+
+    const consoleInput = CodeMirror(document.getElementById('consoleInput'), {
+        lineNumbers: true,
+        mode: 'javascript',
+        extraKeys: {
+            'Tab': 'autocomplete'
+        }
+    });
+
+    const codeMirror = document.querySelector('.CodeMirror');
+    codeMirror.style.height = '100%';
+    codeMirror.style.wdith = '100%';
+
+    const _userAgent = navigator.userAgent.toLowerCase();
+    const macos_ipad_sim = _userAgent.indexOf('ipad') > -1 && navigator.maxTouchPoints === 0;
+    if (!macos_ipad_sim) {
+        autocompleteButton.classList.add('active');
+        autocompleteButton.addEventListener('click', function() {
+            event.preventDefault();
+            consoleInput.showHint({ completeSingle: false });
+            consoleInput.focus();
+        });
+    } else {
+        loadButton.classList.add('active');
+        loadButton.addEventListener('click', function () {
+            const staticUrl = 'console.txt';
+            fetch(staticUrl)
+                .then(response => {
+                    if (!response.ok && response.status !== 0) {
+                        throw new Error(`HTTP error status ${response.status}`);
+                    } else {
+                        return response.text();
+                    }
+                })
+                .then(text => {
+                    consoleInput.setValue(text.trim());
+                    appendToConsoleOutput(`Loaded code from ${staticUrl}`, '_log');
+                })
+                .catch(error => {
+                    appendToConsoleOutput(`Error: ${error.message}`, '_error');
+                });
+        });
+    }
 
     // Override console.log
     const originalConsoleLog = console.log;
@@ -90,29 +139,9 @@ document.addEventListener('DOMContentLoaded', function () {
         appendToConsoleOutput(`Error: ${message} at ${source}:${lineno}:${colno}`, '_error');
     };
 
-    // Load code from a URL
-    loadButton.addEventListener('click', function () {
-        const staticUrl = 'console.txt';
-        fetch(staticUrl)
-            .then(response => {
-                if (!response.ok && response.status !== 0) {
-                    throw new Error(`HTTP error status ${response.status}`);
-                } else {
-                    return response.text();
-                }
-            })
-            .then(text => {
-                consoleInput.value = text.trim();
-                appendToConsoleOutput(`Loaded code from ${staticUrl}`, '_log');
-            })
-            .catch(error => {
-                appendToConsoleOutput(`Error: ${error.message}`, '_error');
-            });
-    });
-
     // Execute code from the input field
     executeButton.addEventListener('click', function () {
-        const code = consoleInput.value.trim();
+        const code = consoleInput.getValue().trim();
         if (code) {
             appendToConsoleOutput(code, '_input');
             try {
@@ -125,7 +154,7 @@ document.addEventListener('DOMContentLoaded', function () {
             } catch (error) {
                 appendToConsoleOutput(`Error: ${error.message}`, '_error');
             }
-            consoleInput.value = '';
+            consoleInput.setValue('');
         }
     });
 
@@ -134,7 +163,7 @@ document.addEventListener('DOMContentLoaded', function () {
         while (consoleOutput.firstChild) {
             consoleOutput.removeChild(consoleOutput.firstChild);
         }
-        consoleInput.value = ''
+        consoleInput.setValue('');
     });
 
     // Copy the entire HTML content
@@ -157,7 +186,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Optionally, alert the user that the content has been copied
         appendToConsoleOutput('HTML content copied to clipboard!', '_log');
     });
-});
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     if (window.scriptExecuted) return;
@@ -230,8 +259,44 @@ var _OALD9_PICS = 1; // 是否显示图片：0:不显示，1：显示；由于�
 
 
 ///
-_setupGears();
+// Load CodeMirror resources
+Promise.all([
+    loadResource('css', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/codemirror.min.css'),
+    loadResource('js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/codemirror.min.js'),
+    loadResource('js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/mode/javascript/javascript.min.js'),
+    loadResource('js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/addon/hint/show-hint.min.js'),
+    loadResource('js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/addon/hint/javascript-hint.min.js'),
+    loadResource('css', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/addon/hint/show-hint.min.css')
+]).then(() => {
+    _setupGears();
 
+    if (!window.__OALD9_contentLoadedOnce) {
+        window.__OALD9_contentLoadedOnce = true;
+        window.addEventListener('DOMContentLoaded', oald9);
+    }
+}).catch((error) => {
+    console.error('Error loading resources:', error);
+});
+
+function loadResource(type, url) {
+    return new Promise((resolve, reject) => {
+        let element;
+
+        if (type === 'js') {
+            element = document.createElement('script');
+            element.src = url;
+        } else if (type === 'css') {
+            element = document.createElement('link');
+            element.rel = 'stylesheet';
+            element.href = url;
+        }
+
+        element.onload = resolve;
+        element.onerror = reject;
+
+        document.head.appendChild(element);
+    });
+}
 
 // http://iamdustan.com/smoothscroll/
 // https://github.com/iamdustan/smoothscroll
@@ -307,11 +372,6 @@ function toggle_hide(ctl) {
         }
     }
 }*/
-
-if (!window.__OALD9_contentLoadedOnce) {
-    window.__OALD9_contentLoadedOnce = true;
-    window.addEventListener('DOMContentLoaded', oald9);
-}
 
 function oald9(){
     var oalds = document.getElementsByClassName('OALD9_online');
@@ -804,6 +864,8 @@ function _setupGearMenu() {
         '</div>';
 
     o9.insertBefore(menu, o9.firstChild);
+
+    loadCustomConsole();
 
     menu.onclick = function(e) {
         var t = e.target, cmd, v;
