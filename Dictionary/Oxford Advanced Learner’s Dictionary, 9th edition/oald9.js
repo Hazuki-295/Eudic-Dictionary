@@ -28,13 +28,6 @@ function loadCustomConsole() {
     oald.insertBefore(container, oald.firstChild);
 
     const consoleOutput = document.getElementById('consoleOutput');
-    const loadButton = document.getElementById('loadButton');
-    const executeButton = document.getElementById('executeButton');
-    const clearButton = document.getElementById('clearButton');
-    const copyButton = document.getElementById('copyButton');
-    const autocompleteButton = document.getElementById('autocompleteButton');
-    const copyConsoleTextButton = document.getElementById('copyConsoleTextButton');
-
     const consoleInput = CodeMirror(document.getElementById('consoleInput'), {
         lineNumbers: true,
         lineWrapping: true,
@@ -48,11 +41,14 @@ function loadCustomConsole() {
     codeMirror.style.maxHeight = '100%';
     codeMirror.style.maxWdith = '100%';
 
+    const autocompleteButton = document.getElementById('autocompleteButton');
+    const loadButton = document.getElementById('loadButton');
+
     const _userAgent = navigator.userAgent.toLowerCase();
     const macos_ipad_sim = _userAgent.indexOf('ipad') > -1 && navigator.maxTouchPoints === 0;
     if (!macos_ipad_sim) {
         autocompleteButton.classList.add('active');
-        autocompleteButton.addEventListener('click', function() {
+        autocompleteButton.addEventListener('click', function () {
             event.preventDefault();
             consoleInput.showHint({ completeSingle: false });
             consoleInput.focus();
@@ -118,7 +114,7 @@ function loadCustomConsole() {
             copyButton.style.visibility = 'hidden';
             copyButton.style.opacity = '0.9';
             copyButton.addEventListener('click', function () {
-                navigator.clipboard.writeText(message);
+                copyToClipboard(message);
             });
 
             newMessage.appendChild(copyButton);
@@ -143,7 +139,7 @@ function loadCustomConsole() {
     };
 
     // Execute code from the input field
-    executeButton.addEventListener('click', function () {
+    document.getElementById('executeButton').addEventListener('click', function () {
         const code = consoleInput.getValue().trim();
         if (code) {
             appendToConsoleOutput(code, '_input');
@@ -161,22 +157,17 @@ function loadCustomConsole() {
         }
     });
 
-    // Add a 'click' event listener to the 'Clear' button
-    clearButton.addEventListener('click', function () {
+    // Clear all console messages
+    document.getElementById('clearButton').addEventListener('click', function () {
         while (consoleOutput.firstChild) {
             consoleOutput.removeChild(consoleOutput.firstChild);
         }
         consoleInput.setValue('');
     });
 
-    // Copy the entire HTML content
-    copyButton.addEventListener('click', function () {
-        // Get the entire HTML content
-        const htmlContent = document.documentElement.outerHTML;
-
-        // Create a temporary textarea element
+    function copyToClipboard(text) {
         const textarea = document.createElement('textarea');
-        textarea.value = htmlContent;
+        textarea.value = text;
         document.body.appendChild(textarea);
 
         // Select the content and copy it to the clipboard
@@ -186,28 +177,19 @@ function loadCustomConsole() {
         // Remove the temporary textarea element
         document.body.removeChild(textarea);
 
-        // Optionally, alert the user that the content has been copied
-        appendToConsoleOutput('HTML content copied to clipboard!', '_log');
+        appendToConsoleOutput('Content copied to clipboard!', '_log');
+    }
+
+    // Copy the entire HTML content
+    document.getElementById('copyButton').addEventListener('click', function () {
+        const htmlContent = document.documentElement.outerHTML;
+        copyToClipboard(htmlContent);
     });
 
     // Copy the entire console content
-    copyConsoleTextButton.addEventListener('click', function() {
+    document.getElementById('copyConsoleTextButton').addEventListener('click', function () {
         const consoleText = consoleOutput.innerText;
-    
-        // Create a temporary textarea element
-        const textarea = document.createElement('textarea');
-        textarea.value = consoleText;
-        document.body.appendChild(textarea);
-    
-        // Select the content and copy it to the clipboard
-        textarea.select();
-        document.execCommand('copy');
-    
-        // Remove the temporary textarea element
-        document.body.removeChild(textarea);
-
-        // Optionally, alert the user that the content has been copied
-        appendToConsoleOutput('Console content copied to clipboard!', '_log');
+        copyToClipboard(consoleText);
     });
 }
 
