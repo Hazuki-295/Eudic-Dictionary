@@ -30,11 +30,64 @@ var _OALD9_MAX_TABS = 9; // 查询到多个词条时，如果词条数超过此�
 var _OALD9_PICS = 1; // 是否显示图片：0:不显示，1：显示；由于图片未处理为背景透明，当使用非白色背景主题时，可选择不显示图片，以取得最佳观感效果
 ///----------------------------------------------------------------------------
 
-const OALD9_USERAGENT = navigator.userAgent.toLowerCase();
-const MACOS_IPAD_SIM = OALD9_USERAGENT.indexOf('ipad') > -1 && navigator.maxTouchPoints === 0;
+/* Hazuki Debug */
+var Hazuki_USER_AGENT = navigator.userAgent.toLowerCase();
+var Hazuki_EUDIC = Hazuki_USER_AGENT.indexOf('eudic') > -1;
+var MACOS_IPAD_SIM = Hazuki_USER_AGENT.indexOf('ipad') > -1 && navigator.maxTouchPoints === 0;
+
+const ANCESTOR_CLASS = '.explain_wrap_styleless'; // Eudic
+
+const OALD_SELECTOR = '.OALD9_online';
+const VOCABULARY_SELECTOR = '.definitionsContainer';
+
+const getAncestorId = (innerNodeSelector) => {
+    if (!Hazuki_EUDIC) {
+        console.log('[Hazuki] Eudic not detected.');
+        return null;
+    } else {
+        console.log('[Hazuki] Eudic detected.');
+    }
+
+    const innerNode = document.querySelector(innerNodeSelector);
+    if (!innerNode) {
+        console.log(`[Hazuki] Inner node with selector '${innerNodeSelector}' not found.`);
+        return null;
+    }
+
+    const ancestor = innerNode.closest(ANCESTOR_CLASS);
+    if (!ancestor) {
+        console.log(`[Hazuki] Ancestor with class '${ANCESTOR_CLASS}' not found.`);
+    }
+
+    const ancestorId = ancestor ? ancestor.id : null;
+    console.log(`[Hazuki] Ancestor with class '${ANCESTOR_CLASS}' found: '${ancestorId}'.`);
+    return ancestorId;
+}
+
+const defineLazyProperty = (propertyName, selector) => {
+    const privatePropertyName = `_${propertyName}`;
+
+    Object.defineProperty(window, propertyName, {
+        get: function () {
+            if (window[privatePropertyName] === undefined) {
+                window[privatePropertyName] = getAncestorId(selector);
+            }
+            return window[privatePropertyName];
+        }
+    });
+}
+
+defineLazyProperty('OALD9_ID', OALD_SELECTOR);
+defineLazyProperty('VOCABULARY_ID', VOCABULARY_SELECTOR);
+/* Hazuki Debug */
 
 ///
 // Load CodeMirror resources
+const resourceConfig = {
+    js: { element: 'script', src: 'src' },
+    css: { element: 'link', src: 'href', rel: 'stylesheet' }
+};
+
 Promise.all([
     loadResource('css', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/codemirror.min.css'),
     loadResource('js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/codemirror.min.js'),
@@ -43,16 +96,16 @@ Promise.all([
     loadResource('js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/addon/hint/javascript-hint.min.js'),
     loadResource('css', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/addon/hint/show-hint.min.css')
 ]).then(() => {
-    if (!window.__OALD9_contentLoadedOnce) {
-        window.__OALD9_contentLoadedOnce = true;
+    if (!window.OALD9_CONTENT_LOADED_ONCE) {
+        window.OALD9_CONTENT_LOADED_ONCE = true;
+
         _setupGears();
 
+        /// Actual start point of the script
         document.addEventListener('DOMContentLoaded', () => {
             oald9();
             oald9_collapse();
-            if (MACOS_IPAD_SIM) {
-                addNoteCopyButton();
-            }
+            if (MACOS_IPAD_SIM) { addNoteCopyButton(); }
         });
     }
 }).catch((error) => {
@@ -61,19 +114,16 @@ Promise.all([
 
 function loadResource(type, url) {
     return new Promise((resolve, reject) => {
-        let element;
-
-        if (type === 'js') {
-            element = document.createElement('script');
-            element.src = url;
-        } else if (type === 'css') {
-            element = document.createElement('link');
-            element.rel = 'stylesheet';
-            element.href = url;
-        }
+        const config = resourceConfig[type];
+        const element = document.createElement(config.element);
+        element[config.src] = url;
 
         element.onload = resolve;
         element.onerror = reject;
+
+        if (config.rel) {
+            element.rel = config.rel;
+        }
 
         document.head.appendChild(element);
     });
@@ -275,51 +325,52 @@ function oald9_collapse() {
         .forEach(headingElement => headingElement.click());
 
     // Definition selector
-    const definitionSelector = '.def';
+    const definitionSelector = Hazuki_EUDIC ? `#${window.OALD9_ID} .def` : '.def';
 
     // Collapsible elements selector
     const collapsibleSelector = '.x-gs, .collapse';
 
     // Attend buttons to the definitions
+    function createButton(className, clickHandler) {
+        const button = document.createElement('button');
+        button.classList.add('append-button', className);
+        button.addEventListener('click', clickHandler);
+        return button;
+    }
+
+    function addButtonToDefinition(definition, button) {
+        definition.appendChild(button);
+        definition.addEventListener('mouseover', () => button.style.display = 'inline');
+        definition.addEventListener('mouseout', () => button.style.display = 'none');
+    }
+
     document.querySelectorAll(definitionSelector).forEach(definition => {
-        // Copy button
-        const copyButton = document.createElement('button');
-        copyButton.classList.add('append-button', 'Copy');
-
-        copyButton.addEventListener('click', function () {
-            copyToClipboard(definition.textContent);
-            copyButton.classList.add('copied');
-            setTimeout(function () {
-                copyButton.classList.remove('copied');
-            }, 2000);
-        });
-
-        // Collapse button
-        const collapseButton = document.createElement('button');
-
-        const autoHideCollapsible = false; // Hide by default
         const collapsibleElements = definition.parentElement.querySelectorAll(collapsibleSelector);
-        
-        if (autoHideCollapsible) {
-            collapsibleElements.forEach(e => e.style.display = 'none');
-            collapseButton.classList.add('append-button', 'collapsed');
-        } else {
-            collapseButton.classList.add('append-button', 'expanded');
-        }
+        const autoHideCollapsible = false; // Hide by default
 
-        collapseButton.addEventListener('click', function () {
-            if (collapseButton.classList.contains('collapsed')) {
-                collapsibleElements.forEach(e => e.style.display = 'block');
-                collapseButton.className = 'append-button expanded';
-            } else {
-                collapsibleElements.forEach(e => e.style.display = 'none');
-                collapseButton.className = 'append-button collapsed';
-            }
+        // Copy Button Logic
+        const copyButton = createButton('copy', function () {
+            copyToClipboard(definition.textContent);
+            this.classList.add('copied');
+            setTimeout(() => this.classList.remove('copied'), 2000);
         });
 
-        // Append buttons to the end of definition
-        definition.appendChild(copyButton);
-        definition.appendChild(collapseButton);
+        addButtonToDefinition(definition, copyButton);
+
+        // Collapse Button Logic
+        if (collapsibleElements.length > 0) {
+            const collapseButton = createButton(autoHideCollapsible ? 'collapsed' : 'expanded', function () {
+                const isCollapsed = this.classList.contains('collapsed');
+                collapsibleElements.forEach(e => e.style.display = isCollapsed ? 'block' : 'none');
+                this.className = `append-button ${isCollapsed ? 'expanded' : 'collapsed'}`;
+            });
+
+            if (autoHideCollapsible) {
+                collapsibleElements.forEach(e => e.style.display = 'none');
+            }
+
+            addButtonToDefinition(definition, collapseButton);
+        }
     });
 
     // Add click event listener to the gear menu icon
