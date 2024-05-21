@@ -1,6 +1,95 @@
 /// remove Eudict header info
 setTimeout(function(){var e=document.getElementById('wordInfoHead');e&&e.remove()},0);
 
+////////////////////////////////== Settings ==\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+/// @个性设置: 默认例句发音: 1:英式, 2:美式
+var _OALD9_DEFAULT_PRON = 1;
+
+/// @个性设置: O9 滑出视野后自动隐藏词性切换按钮: 1:开启, 0:关闭
+var _OALD9_AUTO_TABSHIDE_ON = 1;
+
+/// @个性设置: 默认中文显示级别: 0:不显示, 1:显示释义中文, 2:显示释义中文+例句中文
+var _OALD9_TRANS_LEVEL = 2;
+
+/// @个性设置: 例句中文换行： 0:不换行, 1:换行
+var _OALD9_BREAK_EXPCN = 1;
+
+/// @个性设置: 字体大小: 1:较小, 2:适中, 3:较大
+var _OALD9_FONTSIZE = 2;
+
+/// @个性设置: 主题色彩: 1:白，2:棕褐色, 3:绿色护眼
+var _OALD9_THEME = 1;
+
+/// @Debug: Custom Console: 0:隐藏, 1:显示
+var _OALD9_Custom_Console = 0;
+
+var _OALD9_SCROLLTOP_POS = 50; // 回滚顶部位置: iPhoneX:50, iPhone11:54, iPhone:28
+var _OALD9_AUTO_TABSHIDE_POS = 160; // 如果启用自动隐藏词性切换功能，此值用于设置当 O9 显示在屏幕可视区域内的高度(px)小于此值时，自动隐藏词性切换按钮
+var _OALD9_APPEND_TABS = 1; // 0：不添加，1：添加；查询到多个词条时，是否为单词性词条添加滑动导航按钮（斜条纹底色按钮）
+var _OALD9_MAX_TABS = 9; // 查询到多个词条时，如果词条数超过此值，则不为单词性词条添加滑动导航按钮（典型如 O9 词头扩充版下查询`is`）
+var _OALD9_PICS = 1; // 是否显示图片：0:不显示，1：显示；由于图片未处理为背景透明，当使用非白色背景主题时，可选择不显示图片，以取得最佳观感效果
+///----------------------------------------------------------------------------
+
+
+
+///
+// Load CodeMirror resources
+Promise.all([
+    loadResource('css', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/codemirror.min.css'),
+    loadResource('js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/codemirror.min.js'),
+    loadResource('js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/mode/javascript/javascript.min.js'),
+    loadResource('js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/addon/hint/show-hint.min.js'),
+    loadResource('js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/addon/hint/javascript-hint.min.js'),
+    loadResource('css', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/addon/hint/show-hint.min.css')
+]).then(() => {
+    if (!window.__OALD9_contentLoadedOnce) {
+        window.__OALD9_contentLoadedOnce = true;
+        _setupGears();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            oald9();
+            oald9_collapse();
+        });
+    }
+}).catch((error) => {
+    console.error('Error loading resources:', error);
+});
+
+function loadResource(type, url) {
+    return new Promise((resolve, reject) => {
+        let element;
+
+        if (type === 'js') {
+            element = document.createElement('script');
+            element.src = url;
+        } else if (type === 'css') {
+            element = document.createElement('link');
+            element.rel = 'stylesheet';
+            element.href = url;
+        }
+
+        element.onload = resolve;
+        element.onerror = reject;
+
+        document.head.appendChild(element);
+    });
+}
+
+function copyToClipboard(text) {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    document.body.appendChild(textarea);
+
+    // Select the content and copy it to the clipboard
+    textarea.select();
+    document.execCommand('copy');
+
+    // Remove the temporary textarea element
+    document.body.removeChild(textarea);
+
+    appendToConsoleOutput('Content copied to clipboard!', '_log');
+}
+
 function loadCustomConsole() {
     const container = document.createElement('div');
     container.innerHTML = `
@@ -165,21 +254,6 @@ function loadCustomConsole() {
         consoleInput.setValue('');
     });
 
-    function copyToClipboard(text) {
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        document.body.appendChild(textarea);
-
-        // Select the content and copy it to the clipboard
-        textarea.select();
-        document.execCommand('copy');
-
-        // Remove the temporary textarea element
-        document.body.removeChild(textarea);
-
-        appendToConsoleOutput('Content copied to clipboard!', '_log');
-    }
-
     // Copy the entire HTML content
     document.getElementById('copyButton').addEventListener('click', function () {
         const htmlContent = document.documentElement.outerHTML;
@@ -193,10 +267,8 @@ function loadCustomConsole() {
     });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    if (window.scriptExecuted) return;
-    window.scriptExecuted = true;
-
+function oald9_collapse() {
+    // Collapsible elements selector
     const elementsSelector = '.x-gs, .collapse';
     const toggleVisibility = (elements, display) => elements.forEach(e => e.style.display = display);
 
@@ -208,15 +280,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // document.querySelectorAll(elementsSelector).forEach(e => e.style.display = 'none');
 
     // Add click event listeners to elements with the specified class
-    setTimeout(() => {
-        document.querySelectorAll('.def.translation_individual').forEach(element => {
-            element.addEventListener('click', function () {
-                const elements = this.parentElement.querySelectorAll(elementsSelector);
-                const display = elements[0].style.display === 'none' ? 'block' : 'none';
-                toggleVisibility(elements, display);
-            });
+
+    document.querySelectorAll('.def.translation_individual').forEach(element => {
+        element.addEventListener('click', function () {
+            const elements = this.parentElement.querySelectorAll(elementsSelector);
+            const display = elements[0].style.display === 'none' ? 'block' : 'none';
+            toggleVisibility(elements, display);
         });
-    }, 0);
+    });
 
     // Add click event listener to the gear menu
     const gearMenu = document.getElementById('_OALD9_gear');
@@ -230,76 +301,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     }
-});
-
-////////////////////////////////== Settings ==\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-/// @个性设置: 默认例句发音: 1:英式, 2:美式
-var _OALD9_DEFAULT_PRON = 1;
-
-/// @个性设置: O9 滑出视野后自动隐藏词性切换按钮: 1:开启, 0:关闭
-var _OALD9_AUTO_TABSHIDE_ON = 1;
-
-/// @个性设置: 默认中文显示级别: 0:不显示, 1:显示释义中文, 2:显示释义中文+例句中文
-var _OALD9_TRANS_LEVEL = 2;
-
-/// @个性设置: 例句中文换行： 0:不换行, 1:换行
-var _OALD9_BREAK_EXPCN = 1;
-
-/// @个性设置: 字体大小: 1:较小, 2:适中, 3:较大
-var _OALD9_FONTSIZE = 2;
-
-/// @个性设置: 主题色彩: 1:白，2:棕褐色, 3:绿色护眼
-var _OALD9_THEME = 1;
-
-/// @Debug: Custom Console: 0:隐藏, 1:显示
-var _OALD9_Custom_Console = 0;
-
-var _OALD9_SCROLLTOP_POS = 50; // 回滚顶部位置: iPhoneX:50, iPhone11:54, iPhone:28
-var _OALD9_AUTO_TABSHIDE_POS = 160; // 如果启用自动隐藏词性切换功能，此值用于设置当 O9 显示在屏幕可视区域内的高度(px)小于此值时，自动隐藏词性切换按钮
-var _OALD9_APPEND_TABS = 1; // 0：不添加，1：添加；查询到多个词条时，是否为单词性词条添加滑动导航按钮（斜条纹底色按钮）
-var _OALD9_MAX_TABS = 9; // 查询到多个词条时，如果词条数超过此值，则不为单词性词条添加滑动导航按钮（典型如 O9 词头扩充版下查询`is`）
-var _OALD9_PICS = 1; // 是否显示图片：0:不显示，1：显示；由于图片未处理为背景透明，当使用非白色背景主题时，可选择不显示图片，以取得最佳观感效果
-///----------------------------------------------------------------------------
-
-
-
-///
-// Load CodeMirror resources
-Promise.all([
-    loadResource('css', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/codemirror.min.css'),
-    loadResource('js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/codemirror.min.js'),
-    loadResource('js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/mode/javascript/javascript.min.js'),
-    loadResource('js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/addon/hint/show-hint.min.js'),
-    loadResource('js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/addon/hint/javascript-hint.min.js'),
-    loadResource('css', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/addon/hint/show-hint.min.css')
-]).then(() => {
-    if (!window.__OALD9_contentLoadedOnce) {
-        window.__OALD9_contentLoadedOnce = true;
-        _setupGears();
-        window.addEventListener('DOMContentLoaded', oald9);
-    }
-}).catch((error) => {
-    console.error('Error loading resources:', error);
-});
-
-function loadResource(type, url) {
-    return new Promise((resolve, reject) => {
-        let element;
-
-        if (type === 'js') {
-            element = document.createElement('script');
-            element.src = url;
-        } else if (type === 'css') {
-            element = document.createElement('link');
-            element.rel = 'stylesheet';
-            element.href = url;
-        }
-
-        element.onload = resolve;
-        element.onerror = reject;
-
-        document.head.appendChild(element);
-    });
 }
 
 // http://iamdustan.com/smoothscroll/
