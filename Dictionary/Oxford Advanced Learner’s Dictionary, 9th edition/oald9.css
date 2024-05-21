@@ -151,6 +151,32 @@
     color: #888;
 }
 
+/* definition attend buttons */
+.append-button {
+    display: inline;
+    font-size: 90%;
+    line-height: 1.2;
+    border: none;
+    border-radius: 3px;
+    margin-right: 4px;
+    position: relative;
+    bottom: 1px;
+    color: #007a6c;
+    background: rgba(0, 122, 108, .2);
+}
+.append-button.copy::before {
+    content: "📋";
+}
+.append-button.copied::before {
+    content: "✅";
+}
+.append-button.collapsed::before {
+    content: "►";
+}
+.append-button.expanded::before {
+    content: "▼";
+}
+
 .entry {
     font-family: Bookerly,Georgia,"FZYouSongJ GBK 508R","Source Han Serif CN",Helvetica,"Open Sans",Arial,sans-serif;
     color: #000;

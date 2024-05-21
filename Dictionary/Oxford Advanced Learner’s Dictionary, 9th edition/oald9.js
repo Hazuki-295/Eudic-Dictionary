@@ -21,7 +21,7 @@ var _OALD9_FONTSIZE = 2;
 var _OALD9_THEME = 1;
 
 /// @Debug: Custom Console: 0:隐藏, 1:显示
-var _OALD9_Custom_Console = 0;
+var _OALD9_CUSTOM_CONSOLE = 0;
 
 var _OALD9_SCROLLTOP_POS = 50; // 回滚顶部位置: iPhoneX:50, iPhone11:54, iPhone:28
 var _OALD9_AUTO_TABSHIDE_POS = 160; // 如果启用自动隐藏词性切换功能，此值用于设置当 O9 显示在屏幕可视区域内的高度(px)小于此值时，自动隐藏词性切换按钮
@@ -270,36 +270,71 @@ function loadCustomConsole() {
 }
 
 function oald9_collapse() {
-    // Collapsible elements selector
-    const elementsSelector = '.x-gs, .collapse';
-    const toggleVisibility = (elements, display) => elements.forEach(e => e.style.display = display);
-
     // Expand all collapsible elements with the specified title
     document.querySelectorAll('.collapse[title="Oxford Collocations Dictionary"] .heading')
         .forEach(headingElement => headingElement.click());
 
-    // Hide elements with the specified class by default
-    // document.querySelectorAll(elementsSelector).forEach(e => e.style.display = 'none');
+    // Definition selector
+    const definitionSelector = '.def';
 
-    // Add click event listeners to elements with the specified class
+    // Collapsible elements selector
+    const collapsibleSelector = '.x-gs, .collapse';
 
-    document.querySelectorAll('.def.translation_individual').forEach(element => {
-        element.addEventListener('click', function () {
-            const elements = this.parentElement.querySelectorAll(elementsSelector);
-            const display = elements[0].style.display === 'none' ? 'block' : 'none';
-            toggleVisibility(elements, display);
+    // Attend buttons to the definitions
+    document.querySelectorAll(definitionSelector).forEach(definition => {
+        // Copy button
+        const copyButton = document.createElement('button');
+        copyButton.classList.add('append-button', 'Copy');
+
+        copyButton.addEventListener('click', function () {
+            copyToClipboard(definition.textContent);
+            copyButton.classList.add('copied');
+            setTimeout(function () {
+                copyButton.classList.remove('copied');
+            }, 2000);
         });
+
+        // Collapse button
+        const collapseButton = document.createElement('button');
+
+        const autoHideCollapsible = false; // Hide by default
+        const collapsibleElements = definition.parentElement.querySelectorAll(collapsibleSelector);
+        
+        if (autoHideCollapsible) {
+            collapsibleElements.forEach(e => e.style.display = 'none');
+            collapseButton.classList.add('append-button', 'collapsed');
+        } else {
+            collapseButton.classList.add('append-button', 'expanded');
+        }
+
+        collapseButton.addEventListener('click', function () {
+            if (collapseButton.classList.contains('collapsed')) {
+                collapsibleElements.forEach(e => e.style.display = 'block');
+                collapseButton.className = 'append-button expanded';
+            } else {
+                collapsibleElements.forEach(e => e.style.display = 'none');
+                collapseButton.className = 'append-button collapsed';
+            }
+        });
+
+        // Append buttons to the end of definition
+        definition.appendChild(copyButton);
+        definition.appendChild(collapseButton);
     });
 
-    // Add click event listener to the gear menu
+    // Add click event listener to the gear menu icon
     const gearMenu = document.getElementById('_OALD9_gear');
     if (gearMenu) {
         const gearHead = gearMenu.querySelector('._gear-ico');
         if (gearHead) {
             gearHead.addEventListener('click', function () {
-                const elements = document.querySelectorAll(elementsSelector);
-                const display = elements[0].style.display === 'none' ? 'block' : 'none';
-                toggleVisibility(elements, display);
+                const collapsedButtons = document.querySelectorAll('.append-button.collapsed');
+                const expandedButtons = document.querySelectorAll('.append-button.expanded');
+                if (collapsedButtons.length > 0) {
+                    collapsedButtons.forEach(button => button.click());
+                } else { // Collapse all definitions
+                    expandedButtons.forEach(button => button.click());
+                }
             });
         }
     }
@@ -425,8 +460,8 @@ function oald9(){
     _OALD9_AUTO_TABSHIDE_ON && setTimeout(_cbScrollToHideTabs, 0);
 
     const customConsole = document.getElementById('customConsole');
-    customConsole.classList.toggle('visible', _OALD9_Custom_Console === 1);
-    customConsole.classList.toggle('hidden', _OALD9_Custom_Console !== 1);
+    customConsole.classList.toggle('visible', _OALD9_CUSTOM_CONSOLE === 1);
+    customConsole.classList.toggle('hidden', _OALD9_CUSTOM_CONSOLE !== 1);
 
     for (var i=0, l=oalds.length; i<l; ++i){
         if (MACOS_IPAD_SIM) {
@@ -750,7 +785,7 @@ function _setupGears() {
     _OALD9_FONTSIZE = G.fontSize;
     _OALD9_THEME = G.theme;
     _OALD9_DEFAULT_PRON = G.pron;
-    _OALD9_Custom_Console = G.customConsole;
+    _OALD9_CUSTOM_CONSOLE = G.customConsole;
 
     _setupGearMenu();
 }
@@ -764,7 +799,7 @@ function _getGear(key) {
         fontSize: null === db.getItem('o9ol_4') ? _OALD9_FONTSIZE : parseInt(db.getItem('o9ol_4')),
         theme: null === db.getItem('o9ol_5') ? _OALD9_THEME : parseInt(db.getItem('o9ol_5')),
         pron: null === db.getItem('o9ol_6') ? _OALD9_DEFAULT_PRON : parseInt(db.getItem('o9ol_6')),
-        customConsole: null === db.getItem('o9ol_7') ? _OALD9_Custom_Console : parseInt(db.getItem('o9ol_7'))
+        customConsole: null === db.getItem('o9ol_7') ? _OALD9_CUSTOM_CONSOLE : parseInt(db.getItem('o9ol_7'))
     };
 
     switch (key) {
@@ -774,7 +809,7 @@ function _getGear(key) {
         case 'fontSize': return null === db.getItem('o9ol_4') ? _OALD9_FONTSIZE : parseInt(db.getItem('o9ol_4'));
         case 'theme': return null === db.getItem('o9ol_5') ? _OALD9_THEME : parseInt(db.getItem('o9ol_5'));
         case 'pron': return null === db.getItem('o9ol_6') ? _OALD9_DEFAULT_PRON : parseInt(db.getItem('o9ol_6'));
-        case 'customConsole': return null === db.getItem('o9ol_7') ? _OALD9_Custom_Console : parseInt(db.getItem('o9ol_7'));
+        case 'customConsole': return null === db.getItem('o9ol_7') ? _OALD9_CUSTOM_CONSOLE : parseInt(db.getItem('o9ol_7'));
     }
 
     return null;
@@ -815,10 +850,9 @@ function _setGear(key, value) {
             break;
         case 'customConsole':
             db.setItem('o9ol_7', ''+value);
-            _OALD9_Custom_Console = value;
+            _OALD9_CUSTOM_CONSOLE = value;
             const customConsole = document.getElementById('customConsole');
-            customConsole.classList.toggle('visible', value === 1);
-            customConsole.classList.toggle('hidden', value !== 1);
+            customConsole.className = 'customConsole ' + (value === 1 ? 'visible' : 'hidden');
             break;
         case 'fontSize':
             db.setItem('o9ol_4', ''+value);
