@@ -37,14 +37,14 @@ const getAncestorId = (dictName, innerNodeSelector) => {
     /* Dictionary root element */
     const innerNode = document.querySelector(innerNodeSelector);
     if (!innerNode) {
-        console.log(`[Hazuki] ${dictString} Inner node with selector '${innerNodeSelector}' not found.`);
+        console.warn(`[Hazuki] ${dictString} Inner node with selector '${innerNodeSelector}' not found.`);
         return null;
     }
 
     /* Eudic ancestor node */
     const ancestor = innerNode.closest(Hazuki_DEBUG.EUDIC_ANCESTOR_CLASS);
     if (!ancestor) {
-        console.log(`[Hazuki] ${dictString} Ancestor with class '${Hazuki_DEBUG.EUDIC_ANCESTOR_CLASS}' not found.`);
+        console.warn(`[Hazuki] ${dictString} Ancestor with class '${Hazuki_DEBUG.EUDIC_ANCESTOR_CLASS}' not found.`);
         return null;
     }
 
@@ -54,10 +54,11 @@ const getAncestorId = (dictName, innerNodeSelector) => {
     return ancestorId;
 }
 
-const Hazuki_DEBUG = {
+var Hazuki_DEBUG = {
     /* User agent and platform */
     USER_AGENT: navigator.userAgent.toLowerCase(),
     MACOS_IPAD_SIM: function () { return this.USER_AGENT.indexOf('ipad') > -1 && navigator.maxTouchPoints === 0; },
+    IOS: function () { return this.USER_AGENT.indexOf('iphone') > -1; },
 
     /* Application: Eudic */
     EUDIC: function () { return this.USER_AGENT.indexOf('eudic') > -1; },
@@ -70,11 +71,12 @@ const Hazuki_DEBUG = {
     initialize: function () {
         this.MACOS_IPAD_SIM = this.MACOS_IPAD_SIM();
         this.EUDIC = this.EUDIC();
+        this.IOS = this.IOS();
 
         const CustomConsoleInstance = new CustomConsole('.OALD9_online');
         CustomConsoleInstance.initialize();
 
-        console.log(`[Hazuki] User agent: ${this.USER_AGENT}`);
+        console.info(`[Hazuki] User agent: ${this.USER_AGENT}`);
 
         if (this.EUDIC) {
             console.log('[Hazuki] Eudic detected.');
@@ -84,7 +86,65 @@ const Hazuki_DEBUG = {
             console.log('[Hazuki] Eudic not detected.');
         }
         console.log('[Hazuki] Debugging initialized.');
-    }
+    },
+
+    functionStats: {},
+
+    trackFunction: function (func, name) {
+        return new Proxy(func, {
+            apply: (target, thisArg, argumentsList) => {
+                // Initialize stats object for this function if it doesn't exist
+                if (!this.functionStats[name]) {
+                    this.functionStats[name] = { callCount: 0 };
+                }
+
+                // Update stats
+                this.functionStats[name].callCount++;
+
+                console.log(`[Hazuki] Function call: ${name}() ${this.functionStats[name].callCount} call(s)`);
+
+                return target.apply(thisArg, argumentsList);
+            }
+        });
+    },
+
+    extractScriptContent: async function () {
+        let allScriptsContent = '';
+        const scripts = document.querySelectorAll('script');
+        const fetchPromises = [];
+
+        scripts.forEach((script, index) => {
+            const scriptBoundaries = (content, src = '') => `
+            // --- Start of Script ${index + 1} ${src} ---
+            ${content}
+            // --- End of Script ${index + 1} ---
+            `;
+
+            if (script.src) {
+                fetchPromises.push(
+                    fetch(script.src)
+                        .then(response => response.text())
+                        .then(data => {
+                            allScriptsContent += scriptBoundaries(data, `(${script.src})`);
+                        })
+                        .catch(error => console.error(`[Hazuki] Error fetching ${script.src}:`, error))
+                );
+            } else {
+                allScriptsContent += scriptBoundaries(script.textContent);
+            }
+        });
+
+        await Promise.all(fetchPromises);
+        return allScriptsContent;
+    },
+
+    copyScriptContent: function () {
+        this.extractScriptContent().then(scriptsContent => {
+            if (copyToClipboard(scriptsContent)) {
+                console.log('[Hazuki] Copied script content to clipboard.');
+            };
+        });
+    },
 };
 
 class CustomConsole {
@@ -111,11 +171,15 @@ class CustomConsole {
         </div>
         `;
 
+        this.consoleOutput = this.container.querySelector('#consoleOutput');
+        this.consoleInput = this.container.querySelector('#consoleInput');
+
         this.originalConsole = {
             log: console.log,
             warn: console.warn,
             error: console.error,
             info: console.info,
+            trace: console.trace,
         };
 
         this.overrideConsoleMethods();
@@ -128,6 +192,28 @@ class CustomConsole {
             console.error('[Hazuki] Custom console initialization failed.');
             console.error(`[Hazuki] Ancestor with selector '${ancestorSelector}' not found.`);
         }
+    }
+
+    overrideConsoleMethods() {
+        const logTypes = ['log', 'warn', 'error', 'info'];
+        logTypes.forEach(type => {
+            console[type] = (...args) => {
+                // Call the original console method
+                this.originalConsole[type].apply(console, args);
+
+                // Create and append a new message element
+                this.createAndAppendMessage(args, type);
+            };
+        });
+
+        console.trace = () => {
+            console.info('[Hazuki] Trace:');
+            let stack = new Error().stack;
+            // Remove the first line, as it contains the error message which is not needed
+            stack = stack.split('\n').slice(1).join('\n');
+            this.originalConsole.trace(stack); // Call the original console.trace
+            this.createAndAppendMessage([stack], 'trace');
+        };
     }
 
     createMessage(message, type) {
@@ -153,33 +239,16 @@ class CustomConsole {
     createAndAppendMessage(args, type) {
         const message = args.map(arg => (typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg))).join(' ');
         const newMessage = this.createMessage(message, type);
-        const consoleOutput = this.container.querySelector('#consoleOutput');
-        consoleOutput.appendChild(newMessage);
-        consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        this.consoleOutput.appendChild(newMessage);
+        this.consoleOutput.scrollTop = this.consoleOutput.scrollHeight;
     }
 
     appendToConsoleOutput(message, type) {
         this.createAndAppendMessage([message], type);
     }
 
-    overrideConsoleMethods() {
-        const logTypes = ['log', 'warn', 'error', 'info'];
-        logTypes.forEach(type => {
-            console[type] = (...args) => {
-                // Call the original console method
-                this.originalConsole[type].apply(console, args);
-
-                // Create and append a new message element
-                this.createAndAppendMessage(args, type);
-            };
-        });
-    }
-
     setupConsole() {
-        const container = this.container;
-        const consoleOutput = container.querySelector('#consoleOutput');
-        let consoleInput = container.querySelector('#consoleInput');
-        consoleInput = CodeMirror(consoleInput, {
+        this.consoleInput = CodeMirror(this.consoleInput, {
             lineNumbers: true,
             lineWrapping: true,
             mode: 'javascript',
@@ -188,68 +257,42 @@ class CustomConsole {
             }
         });
 
-        const codeMirror = container.querySelector('.CodeMirror');
+        const codeMirror = this.container.querySelector('.CodeMirror');
         codeMirror.style.maxHeight = '100%';
         codeMirror.style.maxWidth = '100%';
 
-        const executeButton = container.querySelector('#executeButton');
-        const clearButton = container.querySelector('#clearButton');
-        const copyButton = container.querySelector('#copyButton');
-        const copyConsoleTextButton = container.querySelector('#copyConsoleTextButton');
+        const executeButton = this.container.querySelector('#executeButton');
 
         // Execute code from the input field
         executeButton.addEventListener('click', () => {
-            const code = consoleInput.getValue().trim();
+            const code = this.consoleInput.getValue().trim();
             if (code) {
                 this.appendToConsoleOutput(code, 'input');
                 try {
                     const result = eval(code);
                     this.appendToConsoleOutput(result, result === undefined ? 'undefined' : 'output');
                 } catch (error) {
-                    console.error(error);
+                    console.error('[Hazuki] Execution error:', error.message || 'Unknown error');
                 }
-                consoleInput.setValue('');
+                this.consoleInput.setValue('');
             }
-        });
-
-        // Clear all console messages
-        clearButton.addEventListener('click', function () {
-            while (consoleOutput.firstChild) {
-                consoleOutput.removeChild(consoleOutput.firstChild);
-            }
-            consoleInput.setValue('');
-        });
-
-        // Copy the entire HTML content
-        copyButton.addEventListener('click', function () {
-            const htmlContent = document.documentElement.outerHTML;
-            copyToClipboard(htmlContent);
-            console.log('[Hazuki] Copied HTML content to clipboard.');
-        });
-
-        // Copy the entire console content
-        copyConsoleTextButton.addEventListener('click', function () {
-            const consoleText = consoleOutput.innerText;
-            copyToClipboard(consoleText);
-            console.log('[Hazuki] Copied console text to clipboard.');
         });
     }
 
     setupToggleButtons() {
-        const container = this.container;
-        const autocompleteButton = container.querySelector('#autocompleteButton');
-        const loadButton = container.querySelector('#loadButton');
+        const autocompleteButton = this.container.querySelector('#autocompleteButton');
+        const loadButton = this.container.querySelector('#loadButton');
 
         if (!Hazuki_DEBUG.MACOS_IPAD_SIM) {
             autocompleteButton.classList.add('active');
-            autocompleteButton.addEventListener('click', function () {
+            autocompleteButton.addEventListener('click', () => {
                 event.preventDefault();
-                consoleInput.showHint({ completeSingle: false });
-                consoleInput.focus();
+                this.consoleInput.showHint({ completeSingle: false });
+                this.consoleInput.focus();
             });
         } else {
             loadButton.classList.add('active');
-            loadButton.addEventListener('click', function () {
+            loadButton.addEventListener('click', () => {
                 const staticUrl = 'console.txt';
                 fetch(staticUrl)
                     .then(response => {
@@ -260,22 +303,52 @@ class CustomConsole {
                         }
                     })
                     .then(text => {
-                        consoleInput.setValue(text.trim());
+                        this.consoleInput.setValue(text.trim());
                         console.log(`[Hazuki] Loaded code from ${staticUrl}`);
                     })
                     .catch(error => {
-                        console.error('[Hazuki] Loading code error:', error);
+                        console.error('[Hazuki] Loading code error:', error.message || 'Unknown error');
                     });
             });
         }
+    }
+
+    setupClearAndCopyButtons() {
+        const clearButton = this.container.querySelector('#clearButton');
+        const copyButton = this.container.querySelector('#copyButton');
+        const copyConsoleTextButton = this.container.querySelector('#copyConsoleTextButton');
+
+        // Clear all console messages
+        clearButton.addEventListener('click', () => {
+            while (this.consoleOutput.firstChild) {
+                this.consoleOutput.removeChild(this.consoleOutput.firstChild);
+            }
+            this.consoleInput.setValue('');
+        });
+
+        // Copy the entire HTML content
+        copyButton.addEventListener('click', () => {
+            const htmlContent = document.documentElement.outerHTML;
+            copyToClipboard(htmlContent);
+            console.log('[Hazuki] Copied HTML content to clipboard.');
+        });
+
+        // Copy the entire console content
+        copyConsoleTextButton.addEventListener('click', () => {
+            const consoleDivs = Array.from(this.consoleOutput.children);
+            const consoleText = consoleDivs.map(div => div.innerText).join('\n');
+            copyToClipboard(consoleText);
+            console.log('[Hazuki] Copied console text to clipboard.');
+        });
     }
 
     initialize() {
         this.loadResources().then(() => {
             this.setupConsole();
             this.setupToggleButtons();
+            this.setupClearAndCopyButtons();
         }).catch((error) => {
-            console.error('[Hazuki] Error loading resources:', error);
+            console.error('[Hazuki] Error loading resources:', error.message || 'Unknown error');
         });
     }
 
@@ -303,46 +376,62 @@ class CustomConsole {
             document.head.appendChild(element);
         });
 
-        return Promise.all([
-            loadResource('css', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/codemirror.min.css'),
-            loadResource('js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/codemirror.min.js'),
-            loadResource('js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/mode/javascript/javascript.min.js'),
-            loadResource('js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/addon/hint/show-hint.min.js'),
-            loadResource('js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/addon/hint/javascript-hint.min.js'),
-            loadResource('css', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/addon/hint/show-hint.min.css')
-        ]);
+        return loadResource('css', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/codemirror.min.css')
+            .then(() => loadResource('js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/codemirror.min.js'))
+            .then(() => loadResource('js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/mode/javascript/javascript.min.js'))
+            .then(() => loadResource('js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/addon/hint/show-hint.min.js'))
+            .then(() => loadResource('js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/addon/hint/javascript-hint.min.js'))
+            .then(() => loadResource('css', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/addon/hint/show-hint.min.css'));
     }
 }
 /* Hazuki Debug */
 
 /// Actual start point of the script
-(function oald9ScriptInit() {
-    if (!window.OALD9_CONTENT_LOADED_ONCE) {
-        window.OALD9_CONTENT_LOADED_ONCE = true;
+(function () {
+    Hazuki_DEBUG.initialize();
 
-        Hazuki_DEBUG.initialize();
+    const oald9ScriptInit = function () {
+        if (!window.OALD9_CONTENT_LOADED_ONCE) {
+            window.OALD9_CONTENT_LOADED_ONCE = true;
 
-        _setupGears();
+            const trackedSetupGears = Hazuki_DEBUG.trackFunction(_setupGears, '_setupGears');
+            trackedSetupGears();
 
-        document.addEventListener('DOMContentLoaded', () => {
-            oald9();
-            oald9_collapse();
-            if (Hazuki_DEBUG.MACOS_IPAD_SIM) { addNoteCopyButton(); }
-        });
-    }
+            document.addEventListener('DOMContentLoaded', () => {
+                console.info(`[Hazuki] Detect 'DOMContentLoaded' event is fired.`)
+
+                const trackedOald9 = Hazuki_DEBUG.trackFunction(oald9, 'oald9');
+                if (Hazuki_DEBUG.functionStats['oald9'] === undefined) {
+                    trackedOald9();
+                } else {
+                    console.warn('[Hazuki] oald9() already called.')
+                }
+
+                const trackedOald9Collapse = Hazuki_DEBUG.trackFunction(oald9_collapse, 'oald9_collapse');
+                if (Hazuki_DEBUG.functionStats['oald9_collapse'] === undefined) {
+                    trackedOald9Collapse();
+                } else {
+                    console.warn('[Hazuki] oald9_collapse() already called.')
+                }
+
+                if (Hazuki_DEBUG.MACOS_IPAD_SIM) {
+                    const trackedAddNoteCopyButton = Hazuki_DEBUG.trackFunction(addNoteCopyButton, 'addNoteCopyButton');
+                    trackedAddNoteCopyButton();
+                }
+            });
+        }
+    };
+
+    const trackedOald9ScriptInit = Hazuki_DEBUG.trackFunction(oald9ScriptInit, 'oald9ScriptInit');
+    trackedOald9ScriptInit();
 })();
 
-function copyToClipboard(text) {
-    const textarea = document.createElement('textarea');
-    textarea.value = text;
-    document.body.appendChild(textarea);
-
-    // Select the content and copy it to the clipboard
-    textarea.select();
-    document.execCommand('copy');
-
-    // Remove the temporary textarea element
-    document.body.removeChild(textarea);
+async function copyToClipboard(text) {
+    try {
+        await navigator.clipboard.writeText(text);
+    } catch (err) {
+        console.error('[Hazuki] Copy to clipboard failed:', err);
+    }
 }
 
 function oald9_collapse() {

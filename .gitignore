@@ -4,4 +4,7 @@
 !**/*.css
 !**/*.js
 
+/debug/*.css
+/debug/*.js
+
 !/README.md

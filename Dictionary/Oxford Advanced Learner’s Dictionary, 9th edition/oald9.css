@@ -124,22 +124,27 @@
 .toggle-buttons button.active {
     display: block;
 }
-.custom-log, .custom-info, .custom-error, .custom-warn,
+.custom-log, .custom-info, .custom-error, .custom-warn, .custom-trace,
 .custom-input, .custom-output, .custom-undefined {
+    color: #333;
     position: relative;
     white-space: pre-wrap;
     padding: 2px 30px 2px 5px;
+    margin: 2px 0;
+    border-radius: 5px;
     display: inline-block;
     width: 100%;
+    max-width: 100%;
+    word-wrap: break-word;
 }
-.custom-log, .custom-info {
-    color: #333;
+.custom-info, .custom-trace {
+    background-color: #E0F7FA;
 }
-.custom-error, .custom-warn {
-    color: #333;
+.custom-error {
     background-color: #FFECEC;
-    padding: 2px 5px;
-    border-radius: 5px;
+}
+.custom-warn {
+    background-color: #FFFACD;
 }
 .custom-input {
     color: #4169E1;
