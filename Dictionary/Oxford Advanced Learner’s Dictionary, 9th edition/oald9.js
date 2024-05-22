@@ -31,125 +31,69 @@ var _OALD9_PICS = 1; // 是否显示图片：0:不显示，1：显示；由于�
 ///----------------------------------------------------------------------------
 
 /* Hazuki Debug */
-var Hazuki_USER_AGENT = navigator.userAgent.toLowerCase();
-var Hazuki_EUDIC = Hazuki_USER_AGENT.indexOf('eudic') > -1;
-var MACOS_IPAD_SIM = Hazuki_USER_AGENT.indexOf('ipad') > -1 && navigator.maxTouchPoints === 0;
+const getAncestorId = (dictName, innerNodeSelector) => {
+    const dictString = `(Dictionary '${dictName}')`;
 
-const ANCESTOR_CLASS = '.explain_wrap_styleless'; // Eudic
-
-const OALD_SELECTOR = '.OALD9_online';
-const VOCABULARY_SELECTOR = '.definitionsContainer';
-
-const getAncestorId = (innerNodeSelector) => {
-    if (!Hazuki_EUDIC) {
-        console.log('[Hazuki] Eudic not detected.');
-        return null;
-    } else {
-        console.log('[Hazuki] Eudic detected.');
-    }
-
+    /* Dictionary root element */
     const innerNode = document.querySelector(innerNodeSelector);
     if (!innerNode) {
-        console.log(`[Hazuki] Inner node with selector '${innerNodeSelector}' not found.`);
+        console.log(`[Hazuki] ${dictString} Inner node with selector '${innerNodeSelector}' not found.`);
         return null;
     }
 
-    const ancestor = innerNode.closest(ANCESTOR_CLASS);
+    /* Eudic ancestor node */
+    const ancestor = innerNode.closest(Hazuki_DEBUG.EUDIC_ANCESTOR_CLASS);
     if (!ancestor) {
-        console.log(`[Hazuki] Ancestor with class '${ANCESTOR_CLASS}' not found.`);
+        console.log(`[Hazuki] ${dictString} Ancestor with class '${Hazuki_DEBUG.EUDIC_ANCESTOR_CLASS}' not found.`);
+        return null;
     }
 
-    const ancestorId = ancestor ? ancestor.id : null;
-    console.log(`[Hazuki] Ancestor with class '${ANCESTOR_CLASS}' found: '${ancestorId}'.`);
+    /* Eudic dictionary id */
+    const ancestorId = ancestor.id;
+    console.log(`[Hazuki] ${dictString} Ancestor found:`, ancestorId);
     return ancestorId;
 }
 
-const defineLazyProperty = (propertyName, selector) => {
-    const privatePropertyName = `_${propertyName}`;
+const Hazuki_DEBUG = {
+    /* User agent and platform */
+    USER_AGENT: navigator.userAgent.toLowerCase(),
+    MACOS_IPAD_SIM: function () { return this.USER_AGENT.indexOf('ipad') > -1 && navigator.maxTouchPoints === 0; },
 
-    Object.defineProperty(window, propertyName, {
-        get: function () {
-            if (window[privatePropertyName] === undefined) {
-                window[privatePropertyName] = getAncestorId(selector);
-            }
-            return window[privatePropertyName];
+    /* Application: Eudic */
+    EUDIC: function () { return this.USER_AGENT.indexOf('eudic') > -1; },
+    EUDIC_ANCESTOR_CLASS: '.explain_wrap_styleless', // Eudic
+
+    /* Dictionary information */
+    DICT_OALD9: { name: 'OALD9', rootElement: '.OALD9_online', id: '' },
+    DICT_VOCABULARY: { name: 'Vocabulary.com', rootElement: '.definitionsContainer', id: '' },
+
+    initialize: function () {
+        this.MACOS_IPAD_SIM = this.MACOS_IPAD_SIM();
+        this.EUDIC = this.EUDIC();
+
+        const CustomConsoleInstance = new CustomConsole('.OALD9_online');
+        CustomConsoleInstance.initialize();
+
+        console.log(`[Hazuki] User agent: ${this.USER_AGENT}`);
+
+        if (this.EUDIC) {
+            console.log('[Hazuki] Eudic detected.');
+            this.DICT_OALD9.id = getAncestorId(this.DICT_OALD9.name, this.DICT_OALD9.rootElement);
+            this.DICT_VOCABULARY.id = getAncestorId(this.DICT_VOCABULARY.name, this.DICT_VOCABULARY.rootElement);
+        } else {
+            console.log('[Hazuki] Eudic not detected.');
         }
-    });
-}
-
-defineLazyProperty('OALD9_ID', OALD_SELECTOR);
-defineLazyProperty('VOCABULARY_ID', VOCABULARY_SELECTOR);
-/* Hazuki Debug */
-
-///
-// Load CodeMirror resources
-const resourceConfig = {
-    js: { element: 'script', src: 'src' },
-    css: { element: 'link', src: 'href', rel: 'stylesheet' }
+        console.log('[Hazuki] Debugging initialized.');
+    }
 };
 
-Promise.all([
-    loadResource('css', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/codemirror.min.css'),
-    loadResource('js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/codemirror.min.js'),
-    loadResource('js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/mode/javascript/javascript.min.js'),
-    loadResource('js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/addon/hint/show-hint.min.js'),
-    loadResource('js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/addon/hint/javascript-hint.min.js'),
-    loadResource('css', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/addon/hint/show-hint.min.css')
-]).then(() => {
-    if (!window.OALD9_CONTENT_LOADED_ONCE) {
-        window.OALD9_CONTENT_LOADED_ONCE = true;
-
-        _setupGears();
-
-        /// Actual start point of the script
-        document.addEventListener('DOMContentLoaded', () => {
-            oald9();
-            oald9_collapse();
-            if (MACOS_IPAD_SIM) { addNoteCopyButton(); }
-        });
-    }
-}).catch((error) => {
-    console.error('Error loading resources:', error);
-});
-
-function loadResource(type, url) {
-    return new Promise((resolve, reject) => {
-        const config = resourceConfig[type];
-        const element = document.createElement(config.element);
-        element[config.src] = url;
-
-        element.onload = resolve;
-        element.onerror = reject;
-
-        if (config.rel) {
-            element.rel = config.rel;
-        }
-
-        document.head.appendChild(element);
-    });
-}
-
-function copyToClipboard(text) {
-    const textarea = document.createElement('textarea');
-    textarea.value = text;
-    document.body.appendChild(textarea);
-
-    // Select the content and copy it to the clipboard
-    textarea.select();
-    document.execCommand('copy');
-
-    // Remove the temporary textarea element
-    document.body.removeChild(textarea);
-
-    console.log('Content copied to clipboard!');
-}
-
-function loadCustomConsole() {
-    const container = document.createElement('div');
-    container.innerHTML = `
+class CustomConsole {
+    constructor(ancestorSelector) {
+        this.container = document.createElement('div');
+        this.container.innerHTML = `
         <div id="customConsole" class="hidden">
             <div id="consoleOutput"></div>
-            <div id="consoleInput" style="height: 100px;"></div>
+            <div id="consoleInput""></div>
             <div class="buttons">
                 <button id="clearButton">Clear</button>
                 <div class="spacer" style="flex-grow: 1;"></div>
@@ -165,158 +109,240 @@ function loadCustomConsole() {
                 <button id="copyButton">Copy HTML</button>
             </div>
         </div>
-    `;
+        `;
 
-    var oald = document.querySelector('.OALD9_online');
-    oald.insertBefore(container, oald.firstChild);
+        this.originalConsole = {
+            log: console.log,
+            warn: console.warn,
+            error: console.error,
+            info: console.info,
+        };
 
-    const consoleOutput = document.getElementById('consoleOutput');
-    const consoleInput = CodeMirror(document.getElementById('consoleInput'), {
-        lineNumbers: true,
-        lineWrapping: true,
-        mode: 'javascript',
-        extraKeys: {
-            'Tab': 'autocomplete'
-        }
-    });
+        this.overrideConsoleMethods();
 
-    const codeMirror = document.querySelector('.CodeMirror');
-    codeMirror.style.maxHeight = '100%';
-    codeMirror.style.maxWdith = '100%';
-
-    const autocompleteButton = document.getElementById('autocompleteButton');
-    const loadButton = document.getElementById('loadButton');
-
-    if (!MACOS_IPAD_SIM) {
-        autocompleteButton.classList.add('active');
-        autocompleteButton.addEventListener('click', function () {
-            event.preventDefault();
-            consoleInput.showHint({ completeSingle: false });
-            consoleInput.focus();
-        });
-    } else {
-        loadButton.classList.add('active');
-        loadButton.addEventListener('click', function () {
-            const staticUrl = 'console.txt';
-            fetch(staticUrl)
-                .then(response => {
-                    if (!response.ok && response.status !== 0) {
-                        throw new Error(`HTTP error status ${response.status}`);
-                    } else {
-                        return response.text();
-                    }
-                })
-                .then(text => {
-                    consoleInput.setValue(text.trim());
-                    appendToConsoleOutput(`Loaded code from ${staticUrl}`, '_log');
-                })
-                .catch(error => {
-                    appendToConsoleOutput(`Error: ${error.message}`, '_error');
-                });
-        });
-    }
-
-    // Override console.log
-    const originalConsoleLog = console.log;
-    console.log = function (...args) {
-        originalConsoleLog.apply(console, args);
-        args.forEach(arg => {
-            appendToConsoleOutput(formatMessage(arg), '_log');
-        });
-    };
-
-    // Function to format messages
-    function formatMessage(message) {
-        if (typeof message === 'object') {
-            return JSON.stringify(message, null, 2);
+        const ancestor = document.querySelector(ancestorSelector);
+        if (ancestor) {
+            ancestor.insertBefore(this.container, ancestor.firstChild);
+            console.log('[Hazuki] Custom console initialized.');
         } else {
-            return String(message);
+            console.error('[Hazuki] Custom console initialization failed.');
+            console.error(`[Hazuki] Ancestor with selector '${ancestorSelector}' not found.`);
         }
     }
 
-    // Function to append messages to the custom console
-    function appendToConsoleOutput(message, type) {
+    createMessage(message, type) {
         const newMessage = document.createElement('div');
-        newMessage.className = type;
+        newMessage.className = `custom-${type}`;
         newMessage.textContent = message;
-        newMessage.style.position = 'relative';
 
-        if (type !== '_input') {
-            const copyButton = document.createElement('button');
-            copyButton.textContent = 'Copy';
-            copyButton.style.position = 'absolute';
-            copyButton.style.height = '20px';
-            copyButton.style.right = '-1em';
-            copyButton.style.top = '0';
-            copyButton.style.bottom = '0';
-            copyButton.style.margin = 'auto';
-            copyButton.style.marginRight = '1.5em';
-            copyButton.style.padding = '2px 10px';
-            copyButton.style.visibility = 'hidden';
-            copyButton.style.opacity = '0.9';
-            copyButton.addEventListener('click', function () {
-                copyToClipboard(message);
-            });
+        const copyButton = document.createElement('button');
+        copyButton.className = 'append-button copy';
+        copyButton.addEventListener('click', () => {
+            copyToClipboard(message);
+            copyButton.classList.add('copied');
+            setTimeout(() => copyButton.classList.remove('copied'), 2000);
+        });
 
-            newMessage.appendChild(copyButton);
+        newMessage.appendChild(copyButton);
+        newMessage.addEventListener('mouseover', () => copyButton.style.display = 'block');
+        newMessage.addEventListener('mouseout', () => copyButton.style.display = 'none');
 
-            newMessage.addEventListener('mouseover', function () {
-                copyButton.style.visibility = 'visible';
-            });
+        return newMessage;
+    }
 
-            newMessage.addEventListener('mouseout', function () {
-                copyButton.style.visibility = 'hidden';
-            });
-        }
-
+    createAndAppendMessage(args, type) {
+        const message = args.map(arg => (typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg))).join(' ');
+        const newMessage = this.createMessage(message, type);
+        const consoleOutput = this.container.querySelector('#consoleOutput');
         consoleOutput.appendChild(newMessage);
         consoleOutput.scrollTop = consoleOutput.scrollHeight;
     }
 
-    // Capture errors
-    window.onerror = function (message, source, lineno, colno, error) {
-        if (source.indexOf('EuDic.app/Html') > -1) { return; } // Ignore errors from Eudic
-        appendToConsoleOutput(`Error: ${message} at ${source}:${lineno}:${colno}`, '_error');
-    };
+    appendToConsoleOutput(message, type) {
+        this.createAndAppendMessage([message], type);
+    }
 
-    // Execute code from the input field
-    document.getElementById('executeButton').addEventListener('click', function () {
-        const code = consoleInput.getValue().trim();
-        if (code) {
-            appendToConsoleOutput(code, '_input');
-            try {
-                const result = eval(code);
-                if (result === undefined) {
-                    appendToConsoleOutput('undefined', '_undefined');
-                } else {
-                    appendToConsoleOutput(formatMessage(result), '_output');
+    overrideConsoleMethods() {
+        const logTypes = ['log', 'warn', 'error', 'info'];
+        logTypes.forEach(type => {
+            console[type] = (...args) => {
+                // Call the original console method
+                this.originalConsole[type].apply(console, args);
+
+                // Create and append a new message element
+                this.createAndAppendMessage(args, type);
+            };
+        });
+    }
+
+    setupConsole() {
+        const container = this.container;
+        const consoleOutput = container.querySelector('#consoleOutput');
+        let consoleInput = container.querySelector('#consoleInput');
+        consoleInput = CodeMirror(consoleInput, {
+            lineNumbers: true,
+            lineWrapping: true,
+            mode: 'javascript',
+            extraKeys: {
+                'Tab': 'autocomplete'
+            }
+        });
+
+        const codeMirror = container.querySelector('.CodeMirror');
+        codeMirror.style.maxHeight = '100%';
+        codeMirror.style.maxWidth = '100%';
+
+        const executeButton = container.querySelector('#executeButton');
+        const clearButton = container.querySelector('#clearButton');
+        const copyButton = container.querySelector('#copyButton');
+        const copyConsoleTextButton = container.querySelector('#copyConsoleTextButton');
+
+        // Execute code from the input field
+        executeButton.addEventListener('click', () => {
+            const code = consoleInput.getValue().trim();
+            if (code) {
+                this.appendToConsoleOutput(code, 'input');
+                try {
+                    const result = eval(code);
+                    this.appendToConsoleOutput(result, result === undefined ? 'undefined' : 'output');
+                } catch (error) {
+                    console.error(error);
                 }
-            } catch (error) {
-                appendToConsoleOutput(`Error: ${error.message}`, '_error');
+                consoleInput.setValue('');
+            }
+        });
+
+        // Clear all console messages
+        clearButton.addEventListener('click', function () {
+            while (consoleOutput.firstChild) {
+                consoleOutput.removeChild(consoleOutput.firstChild);
             }
             consoleInput.setValue('');
+        });
+
+        // Copy the entire HTML content
+        copyButton.addEventListener('click', function () {
+            const htmlContent = document.documentElement.outerHTML;
+            copyToClipboard(htmlContent);
+            console.log('[Hazuki] Copied HTML content to clipboard.');
+        });
+
+        // Copy the entire console content
+        copyConsoleTextButton.addEventListener('click', function () {
+            const consoleText = consoleOutput.innerText;
+            copyToClipboard(consoleText);
+            console.log('[Hazuki] Copied console text to clipboard.');
+        });
+    }
+
+    setupToggleButtons() {
+        const container = this.container;
+        const autocompleteButton = container.querySelector('#autocompleteButton');
+        const loadButton = container.querySelector('#loadButton');
+
+        if (!Hazuki_DEBUG.MACOS_IPAD_SIM) {
+            autocompleteButton.classList.add('active');
+            autocompleteButton.addEventListener('click', function () {
+                event.preventDefault();
+                consoleInput.showHint({ completeSingle: false });
+                consoleInput.focus();
+            });
+        } else {
+            loadButton.classList.add('active');
+            loadButton.addEventListener('click', function () {
+                const staticUrl = 'console.txt';
+                fetch(staticUrl)
+                    .then(response => {
+                        if (!response.ok && response.status !== 0) {
+                            throw new Error(`HTTP error status ${response.status}`);
+                        } else {
+                            return response.text();
+                        }
+                    })
+                    .then(text => {
+                        consoleInput.setValue(text.trim());
+                        console.log(`[Hazuki] Loaded code from ${staticUrl}`);
+                    })
+                    .catch(error => {
+                        console.error('[Hazuki] Loading code error:', error);
+                    });
+            });
         }
-    });
+    }
 
-    // Clear all console messages
-    document.getElementById('clearButton').addEventListener('click', function () {
-        while (consoleOutput.firstChild) {
-            consoleOutput.removeChild(consoleOutput.firstChild);
-        }
-        consoleInput.setValue('');
-    });
+    initialize() {
+        this.loadResources().then(() => {
+            this.setupConsole();
+            this.setupToggleButtons();
+        }).catch((error) => {
+            console.error('[Hazuki] Error loading resources:', error);
+        });
+    }
 
-    // Copy the entire HTML content
-    document.getElementById('copyButton').addEventListener('click', function () {
-        const htmlContent = document.documentElement.outerHTML;
-        copyToClipboard(htmlContent);
-    });
+    loadResources() {
+        // Configuration for different resource types
+        const resourceConfig = {
+            js: { element: 'script', attribute: 'src' },
+            css: { element: 'link', attribute: 'href', rel: 'stylesheet' }
+        };
 
-    // Copy the entire console content
-    document.getElementById('copyConsoleTextButton').addEventListener('click', function () {
-        const consoleText = consoleOutput.innerText;
-        copyToClipboard(consoleText);
-    });
+        // Function to load a resource of a given type from a URL
+        const loadResource = (type, url) => new Promise((resolve, reject) => {
+            const config = resourceConfig[type];
+            const element = document.createElement(config.element);
+            element[config.attribute] = url;
+
+            // Set up event listeners for load and error events
+            element.onload = resolve;
+            element.onerror = reject;
+
+            // If the resource type has a 'rel' attribute, set it
+            if (config.rel) element.rel = config.rel;
+
+            // Append the new element to the head of the document
+            document.head.appendChild(element);
+        });
+
+        return Promise.all([
+            loadResource('css', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/codemirror.min.css'),
+            loadResource('js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/codemirror.min.js'),
+            loadResource('js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/mode/javascript/javascript.min.js'),
+            loadResource('js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/addon/hint/show-hint.min.js'),
+            loadResource('js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/addon/hint/javascript-hint.min.js'),
+            loadResource('css', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.3/addon/hint/show-hint.min.css')
+        ]);
+    }
+}
+/* Hazuki Debug */
+
+/// Actual start point of the script
+(function oald9ScriptInit() {
+    if (!window.OALD9_CONTENT_LOADED_ONCE) {
+        window.OALD9_CONTENT_LOADED_ONCE = true;
+
+        Hazuki_DEBUG.initialize();
+
+        _setupGears();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            oald9();
+            oald9_collapse();
+            if (Hazuki_DEBUG.MACOS_IPAD_SIM) { addNoteCopyButton(); }
+        });
+    }
+})();
+
+function copyToClipboard(text) {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    document.body.appendChild(textarea);
+
+    // Select the content and copy it to the clipboard
+    textarea.select();
+    document.execCommand('copy');
+
+    // Remove the temporary textarea element
+    document.body.removeChild(textarea);
 }
 
 function oald9_collapse() {
@@ -325,7 +351,7 @@ function oald9_collapse() {
         .forEach(headingElement => headingElement.click());
 
     // Definition selector
-    const definitionSelector = Hazuki_EUDIC ? `#${window.OALD9_ID} .def` : '.def';
+    const definitionSelector = `${Hazuki_DEBUG.DICT_OALD9.rootElement} .def`;
 
     // Collapsible elements selector
     const collapsibleSelector = '.x-gs, .collapse';
@@ -336,12 +362,6 @@ function oald9_collapse() {
         button.classList.add('append-button', className);
         button.addEventListener('click', clickHandler);
         return button;
-    }
-
-    function addButtonToDefinition(definition, button) {
-        definition.appendChild(button);
-        definition.addEventListener('mouseover', () => button.style.display = 'inline');
-        definition.addEventListener('mouseout', () => button.style.display = 'none');
     }
 
     document.querySelectorAll(definitionSelector).forEach(definition => {
@@ -355,7 +375,7 @@ function oald9_collapse() {
             setTimeout(() => this.classList.remove('copied'), 2000);
         });
 
-        addButtonToDefinition(definition, copyButton);
+        definition.appendChild(copyButton);
 
         // Collapse Button Logic
         if (collapsibleElements.length > 0) {
@@ -369,7 +389,7 @@ function oald9_collapse() {
                 collapsibleElements.forEach(e => e.style.display = 'none');
             }
 
-            addButtonToDefinition(definition, collapseButton);
+            definition.appendChild(collapseButton);
         }
     });
 
@@ -515,7 +535,7 @@ function oald9(){
     customConsole.classList.toggle('hidden', _OALD9_CUSTOM_CONSOLE !== 1);
 
     for (var i=0, l=oalds.length; i<l; ++i){
-        if (MACOS_IPAD_SIM) {
+        if (Hazuki_DEBUG.MACOS_IPAD_SIM) {
             oalds[i].classList.add('macos_ipad_sim');
         }
 
@@ -994,8 +1014,6 @@ function _setupGearMenu() {
         '</div>';
 
     o9.insertBefore(menu, o9.firstChild);
-
-    loadCustomConsole();
 
     menu.onclick = function(e) {
         var t = e.target, cmd, v;

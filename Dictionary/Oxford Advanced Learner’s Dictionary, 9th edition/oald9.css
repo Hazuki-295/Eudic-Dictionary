@@ -77,7 +77,7 @@
     border: 1px solid #CCC;
     padding: 10px;
     box-sizing: border-box;
-    height: 300px;
+    height: 200px;
     width: 100%;
     overflow-y: auto;
     white-space: pre-wrap;
@@ -86,12 +86,14 @@
 #consoleInput {
     background-color: #FFF;
     border: 1px solid #CCC;
+    padding: 0;
     box-sizing: border-box;
+    height: 100px;
     width: 100%;
     color: #333;
     margin-bottom: 10px;
 }
-#customConsole button {
+#customConsole .buttons button {
     padding: 6px 10px;
     background-color: #007ACC;
     color: white;
@@ -100,7 +102,7 @@
     cursor: pointer;
     margin-right: 5px;
 }
-#customConsole button:hover {
+#customConsole .buttons button:hover {
     background-color: #005A9E;
 }
 .buttons {
@@ -122,52 +124,71 @@
 .toggle-buttons button.active {
     display: block;
 }
-._log, ._error, ._input, ._output, ._undefined {
+.custom-log, .custom-info, .custom-error, .custom-warn,
+.custom-input, .custom-output, .custom-undefined {
+    position: relative;
     white-space: pre-wrap;
-    padding: 2px 5px;
+    padding: 2px 30px 2px 5px;
     display: inline-block;
     width: 100%;
 }
-._log { color: #333; }
-._error {
+.custom-log, .custom-info {
+    color: #333;
+}
+.custom-error, .custom-warn {
     color: #333;
     background-color: #FFECEC;
     padding: 2px 5px;
     border-radius: 5px;
 }
-._input { color: #4169E1; }
-._input::before {
+.custom-input {
+    color: #4169E1;
+}
+.custom-input::before {
     content: '> ';
     color: #4169E1;
 }
-._output { color: #E4544C; }
-._output::before{
+.custom-output {
+    color: #E4544C;
+}
+.custom-output::before {
     content: '* ';
     color: #E4544C;
 }
-._undefined { color: #888; }
-._undefined::before {
+.custom-undefined {
+    color: #888;
+}
+.custom-undefined::before {
     content: '* ';
     color: #888;
 }
 
-/* definition attend buttons */
+/* copy and collapse buttons */
 .append-button {
     display: none;
     opacity: 0.8;
     font-size: 90%;
+    line-height: 1;
     width: 25px;
     height: 20px;
-    line-height: 1.2;
     border: none;
     border-radius: 40%;
-    padding: 0 2px;
+    padding: 2px 5px;
     margin-right: 4px;
     position: relative;
     bottom: 1px;
     color: #007a6c;
     background: rgba(0, 122, 108, .2);
     cursor: pointer;
+}
+#consoleOutput .append-button {
+    position: absolute;
+    right: 2px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+.def:hover .append-button {
+    display: inline-block;
 }
 .append-button.copy::before {
     content: "⧉";
