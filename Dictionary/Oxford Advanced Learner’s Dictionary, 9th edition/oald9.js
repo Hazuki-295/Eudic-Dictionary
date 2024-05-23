@@ -57,9 +57,11 @@ const getAncestorId = (dictName, innerNodeSelector) => {
 var Hazuki_DEBUG = {
     /* User agent and platform */
     USER_AGENT: navigator.userAgent.toLowerCase(),
-    MACOS_IPAD_SIM: function () { return this.USER_AGENT.indexOf('ipad') > -1 && navigator.maxTouchPoints === 0; },
     IOS: function () { return this.USER_AGENT.indexOf('iphone') > -1; },
+    IPAD: function () { return this.USER_AGENT.indexOf('ipad') > -1; },
+    ANDROID: function () { return this.USER_AGENT.indexOf('android') > -1; },
     WINDOWS: function () { return this.USER_AGENT.indexOf('windows nt') > -1; },
+    MACOS_IPAD_SIM: function () { return this.USER_AGENT.indexOf('ipad') > -1 && navigator.maxTouchPoints === 0; },
 
     /* Application: Eudic */
     EUDIC: function () { return this.USER_AGENT.indexOf('eudic') > -1; },
@@ -70,10 +72,13 @@ var Hazuki_DEBUG = {
     DICT_VOCABULARY: { name: 'Vocabulary.com', rootElement: '.definitionsContainer', id: '' },
 
     initialize: function () {
-        this.MACOS_IPAD_SIM = this.MACOS_IPAD_SIM();
-        this.EUDIC = this.EUDIC();
         this.IOS = this.IOS();
+        this.IPAD = this.IPAD();
+        this.ANDROID = this.ANDROID();
         this.WINDOWS = this.WINDOWS();
+        this.MACOS_IPAD_SIM = this.MACOS_IPAD_SIM();
+
+        this.EUDIC = this.EUDIC();
 
         const CustomConsoleInstance = new CustomConsole('.OALD9_online');
         CustomConsoleInstance.initialize();

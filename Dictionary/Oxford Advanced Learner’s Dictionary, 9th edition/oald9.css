@@ -6131,12 +6131,14 @@ span[title="Verb Forms"] .vp {
 .x-g:hover .OALECD_audio .sound.pron-uk:first-child { color:#0072cf!important }
 .x-g:hover .OALECD_audio .sound.pron-us:last-child { color:#de002d!important }
 
+/* pron uk */
 .OALD9_online:not([data-pron]) .OALECD_audio .sound+.sound { opacity:0; pointer-events:none }
-.OALD9_online:not([data-pron]) .x-g:hover .OALECD_audio .sound:first-child { opacity:0; pointer-events:none }
-.OALD9_online:not([data-pron]) .x-g:hover .OALECD_audio .sound:last-child { opacity:1; pointer-events:initial }
+.OALD9_online:not([data-pron]) .x-g:hover .OALECD_audio .sound:first-child { opacity:1; pointer-events:initial }
+.OALD9_online:not([data-pron]) .x-g:hover .OALECD_audio .sound:last-child { opacity:0; pointer-events:none }
+/* pron us */
 .OALD9_online[data-pron="2"] .OALECD_audio .sound:first-child { opacity:0; pointer-events:none }
-.OALD9_online[data-pron="2"] .x-g:hover .OALECD_audio .sound:first-child { opacity:1; pointer-events:initial }
-.OALD9_online[data-pron="2"] .x-g:hover .OALECD_audio .sound:last-child { opacity:0; pointer-events:none }
+.OALD9_online[data-pron="2"] .x-g:hover .OALECD_audio .sound:first-child { opacity:0; pointer-events:none }
+.OALD9_online[data-pron="2"] .x-g:hover .OALECD_audio .sound:last-child { opacity:1; pointer-events:initial }
 
 .collapse .bullet,
 .collapse ul.bullet {
