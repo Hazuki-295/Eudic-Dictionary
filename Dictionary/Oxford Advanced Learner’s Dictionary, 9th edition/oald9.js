@@ -59,6 +59,7 @@ var Hazuki_DEBUG = {
     USER_AGENT: navigator.userAgent.toLowerCase(),
     MACOS_IPAD_SIM: function () { return this.USER_AGENT.indexOf('ipad') > -1 && navigator.maxTouchPoints === 0; },
     IOS: function () { return this.USER_AGENT.indexOf('iphone') > -1; },
+    WINDOWS: function () { return this.USER_AGENT.indexOf('windows nt') > -1; },
 
     /* Application: Eudic */
     EUDIC: function () { return this.USER_AGENT.indexOf('eudic') > -1; },
@@ -72,6 +73,7 @@ var Hazuki_DEBUG = {
         this.MACOS_IPAD_SIM = this.MACOS_IPAD_SIM();
         this.EUDIC = this.EUDIC();
         this.IOS = this.IOS();
+        this.WINDOWS = this.WINDOWS();
 
         const CustomConsoleInstance = new CustomConsole('.OALD9_online');
         CustomConsoleInstance.initialize();
@@ -388,17 +390,17 @@ class CustomConsole {
 
 /// Actual start point of the script
 (function () {
-    Hazuki_DEBUG.initialize();
+    document.addEventListener('DOMContentLoaded', () => {
+        if (Hazuki_DEBUG.OALD9_SCRIPT_RUNED_ONCE === undefined) {
+            Hazuki_DEBUG.OALD9_SCRIPT_RUNED_ONCE = true;
 
-    const oald9ScriptInit = function () {
-        if (!window.OALD9_CONTENT_LOADED_ONCE) {
-            window.OALD9_CONTENT_LOADED_ONCE = true;
+            Hazuki_DEBUG.initialize();
 
-            const trackedSetupGears = Hazuki_DEBUG.trackFunction(_setupGears, '_setupGears');
-            trackedSetupGears();
+            console.info(`[Hazuki] Detect 'DOMContentLoaded' event is fired.`)
 
-            document.addEventListener('DOMContentLoaded', () => {
-                console.info(`[Hazuki] Detect 'DOMContentLoaded' event is fired.`)
+            const oald9ScriptInit = function () {
+                const trackedSetupGears = Hazuki_DEBUG.trackFunction(_setupGears, '_setupGears');
+                trackedSetupGears();
 
                 const trackedOald9 = Hazuki_DEBUG.trackFunction(oald9, 'oald9');
                 if (Hazuki_DEBUG.functionStats['oald9'] === undefined) {
@@ -418,12 +420,12 @@ class CustomConsole {
                     const trackedAddNoteCopyButton = Hazuki_DEBUG.trackFunction(addNoteCopyButton, 'addNoteCopyButton');
                     trackedAddNoteCopyButton();
                 }
-            });
-        }
-    };
+            };
 
-    const trackedOald9ScriptInit = Hazuki_DEBUG.trackFunction(oald9ScriptInit, 'oald9ScriptInit');
-    trackedOald9ScriptInit();
+            const trackedOald9ScriptInit = Hazuki_DEBUG.trackFunction(oald9ScriptInit, 'oald9ScriptInit');
+            trackedOald9ScriptInit();
+        }
+    });
 })();
 
 async function copyToClipboard(text) {
