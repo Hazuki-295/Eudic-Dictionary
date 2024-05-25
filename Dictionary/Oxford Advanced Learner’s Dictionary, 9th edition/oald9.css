@@ -2383,7 +2383,7 @@ li.sn-g:before {
 }
 div.h-g .x-gs, /* `affix` */
 .idm-g .x-gs {
-    margin-left: 0;
+    margin-left: 3px;
 }
 .idm-g span.sn-g .x-gs {
     padding-left: 0;
@@ -6074,7 +6074,7 @@ span[title="Verb Forms"] .vp {
 /* `load`#verb */
 .x-g .x::before {
     color: #aaa;
-    margin-left: -1em;
+    margin-left: -0.9em;
     font-family: Helvetica !important;
     font-style: normal;
     font-weight: 200;
@@ -6082,6 +6082,9 @@ span[title="Verb Forms"] .vp {
     transform: translate3D(-3px, -1px, 0); /* ➞ */
     transform: translate3D(-3px, -1px, 0) scale(.9); /* ◆ */
     transition: color .3s ease-in-out;
+}
+.macos_ipad_sim .x-g .x::before {
+    margin-left: -0.7em;
 }
 .x-g:hover .x::before {
     color: #de002d;
@@ -6124,7 +6127,6 @@ span[title="Verb Forms"] .vp {
     line-height: 1.3em !important;
     width: 2em !important;
     top: 1px;
-    margin-left: -3px !important;
 }
 
 .x-g .OALECD_audio .sound { margin-left:0 }

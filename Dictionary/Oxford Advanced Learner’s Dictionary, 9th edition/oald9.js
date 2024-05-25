@@ -627,8 +627,7 @@ function oald9(){
     _OALD9_AUTO_TABSHIDE_ON && setTimeout(_cbScrollToHideTabs, 0);
 
     const customConsole = document.getElementById('customConsole');
-    customConsole.classList.toggle('visible', _OALD9_CUSTOM_CONSOLE === 1);
-    customConsole.classList.toggle('hidden', _OALD9_CUSTOM_CONSOLE !== 1);
+    customConsole.className = 'customConsole ' + (_OALD9_CUSTOM_CONSOLE === 1 ? 'visible' : 'hidden');
 
     for (var i=0, l=oalds.length; i<l; ++i){
         if (Hazuki_DEBUG.MACOS_IPAD_SIM) {
