@@ -71,6 +71,8 @@ var Hazuki_DEBUG = {
     DICT_OALD9: { name: 'OALD9', rootElement: '.OALD9_online', id: '' },
     DICT_VOCABULARY: { name: 'Vocabulary.com', rootElement: '.definitionsContainer', id: '' },
 
+    CONSOLE_ENABLED: false,
+
     initialize: function () {
         this.IOS = this.IOS();
         this.IPAD = this.IPAD();
@@ -80,8 +82,10 @@ var Hazuki_DEBUG = {
 
         this.EUDIC = this.EUDIC();
 
-        const CustomConsoleInstance = new CustomConsole('.OALD9_online');
-        CustomConsoleInstance.initialize();
+        if (this.CONSOLE_ENABLED) {
+            const CustomConsoleInstance = new CustomConsole('.OALD9_online');
+            CustomConsoleInstance.initialize();
+        }
 
         console.info(`[Hazuki] User agent: ${this.USER_AGENT}`);
 
@@ -434,6 +438,20 @@ class CustomConsole {
 })();
 
 async function copyToClipboard(text) {
+    if (Hazuki_DEBUG.MACOS_IPAD_SIM) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+
+        // Select the content and copy it to the clipboard
+        textarea.select();
+        document.execCommand('copy');
+
+        // Remove the temporary textarea element
+        document.body.removeChild(textarea);
+        return;
+    }
+
     try {
         await navigator.clipboard.writeText(text);
     } catch (err) {
@@ -626,8 +644,10 @@ function oald9(){
 
     _OALD9_AUTO_TABSHIDE_ON && setTimeout(_cbScrollToHideTabs, 0);
 
-    const customConsole = document.getElementById('customConsole');
-    customConsole.className = 'customConsole ' + (_OALD9_CUSTOM_CONSOLE === 1 ? 'visible' : 'hidden');
+    if (Hazuki_DEBUG.CONSOLE_ENABLED) {
+        const customConsole = document.getElementById('customConsole');
+        customConsole.className = 'customConsole ' + (_OALD9_CUSTOM_CONSOLE === 1 ? 'visible' : 'hidden');
+    }
 
     for (var i=0, l=oalds.length; i<l; ++i){
         if (Hazuki_DEBUG.MACOS_IPAD_SIM) {
@@ -1017,8 +1037,10 @@ function _setGear(key, value) {
         case 'customConsole':
             db.setItem('o9ol_7', ''+value);
             _OALD9_CUSTOM_CONSOLE = value;
-            const customConsole = document.getElementById('customConsole');
-            customConsole.className = 'customConsole ' + (value === 1 ? 'visible' : 'hidden');
+            if (Hazuki_DEBUG.CONSOLE_ENABLED) {
+                const customConsole = document.getElementById('customConsole');
+                customConsole.className = 'customConsole ' + (value === 1 ? 'visible' : 'hidden');
+            }
             break;
         case 'fontSize':
             db.setItem('o9ol_4', ''+value);
@@ -1084,13 +1106,14 @@ function _setupGearMenu() {
                     '<span data-cmd="autoHideTabs" data-v="0"'+(G.autoHideTabs===0?' data-checked="1"':'')+'>no</span>' +
                 '</div>' +
             '</div>' +
+            (Hazuki_DEBUG.CONSOLE_ENABLED ?
             '<div class="_gear-g custom-console">' +
                 '<div class="_gear-lb">show custom console</div>' +
                 '<div class="_gear-igs">' +
                     '<span data-cmd="customConsole" data-v="1"'+(G.customConsole===1?' data-checked="1"':'')+'>yes</span>' +
                     '<span data-cmd="customConsole" data-v="0"'+(G.customConsole===0?' data-checked="1"':'')+'>no</span>' +
                 '</div>' +
-            '</div>' +
+            '</div>' : '') +
             '<div class="_gear-g auto-tabs">' +
                 '<div class="_gear-lb">theme & font size</div>' +
                 '<div class="_gear-igs _multi">' +
