@@ -6084,7 +6084,7 @@ span[title="Verb Forms"] .vp {
     transition: color .3s ease-in-out;
 }
 .macos_ipad_sim .x-g .x::before {
-    margin-left: -0.7em;
+    margin-left: -0.5em;
 }
 .x-g:hover .x::before {
     color: #de002d;

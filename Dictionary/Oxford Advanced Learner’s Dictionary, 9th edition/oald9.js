@@ -20,7 +20,7 @@ var _OALD9_FONTSIZE = 2;
 /// @个性设置: 主题色彩: 1:白，2:棕褐色, 3:绿色护眼
 var _OALD9_THEME = 1;
 
-/// @Debug: Custom Console: 0:隐藏, 1:显示
+/// @Hazuki_Debug: Custom Console: 0:隐藏, 1:显示
 var _OALD9_CUSTOM_CONSOLE = 0;
 
 var _OALD9_SCROLLTOP_POS = 50; // 回滚顶部位置: iPhoneX:50, iPhone11:54, iPhone:28
@@ -34,28 +34,28 @@ var _OALD9_PICS = 1; // 是否显示图片：0:不显示，1：显示；由于�
 const getAncestorId = (dictName, innerNodeSelector) => {
     const dictString = `(Dictionary '${dictName}')`;
 
-    /* Dictionary root element */
+    // Dictionary root element
     const innerNode = document.querySelector(innerNodeSelector);
     if (!innerNode) {
         console.warn(`[Hazuki] ${dictString} Inner node with selector '${innerNodeSelector}' not found.`);
         return null;
     }
 
-    /* Eudic ancestor node */
+    // Eudic ancestor node
     const ancestor = innerNode.closest(Hazuki_DEBUG.EUDIC_ANCESTOR_CLASS);
     if (!ancestor) {
         console.warn(`[Hazuki] ${dictString} Ancestor with class '${Hazuki_DEBUG.EUDIC_ANCESTOR_CLASS}' not found.`);
         return null;
     }
 
-    /* Eudic dictionary id */
+    // Eudic dictionary id
     const ancestorId = ancestor.id;
     console.log(`[Hazuki] ${dictString} Ancestor found:`, ancestorId);
     return ancestorId;
 }
 
 var Hazuki_DEBUG = {
-    /* User agent and platform */
+    // User agent and platform
     USER_AGENT: navigator.userAgent.toLowerCase(),
     IOS: function () { return this.USER_AGENT.indexOf('iphone') > -1; },
     IPAD: function () { return this.USER_AGENT.indexOf('ipad') > -1; },
@@ -63,11 +63,11 @@ var Hazuki_DEBUG = {
     WINDOWS: function () { return this.USER_AGENT.indexOf('windows nt') > -1; },
     MACOS_IPAD_SIM: function () { return this.USER_AGENT.indexOf('ipad') > -1 && navigator.maxTouchPoints === 0; },
 
-    /* Application: Eudic */
+    // Application: Eudic
     EUDIC: function () { return this.USER_AGENT.indexOf('eudic') > -1; },
     EUDIC_ANCESTOR_CLASS: '.explain_wrap_styleless', // Eudic
 
-    /* Dictionary information */
+    // Dictionary information
     DICT_OALD9: { name: 'OALD9', rootElement: '.OALD9_online', id: '' },
     DICT_VOCABULARY: { name: 'Vocabulary.com', rootElement: '.definitionsContainer', id: '' },
 
@@ -407,32 +407,15 @@ class CustomConsole {
 
             console.info(`[Hazuki] Detect 'DOMContentLoaded' event is fired.`)
 
-            const oald9ScriptInit = function () {
-                const trackedSetupGears = Hazuki_DEBUG.trackFunction(_setupGears, '_setupGears');
-                trackedSetupGears();
+            _setupGears();
 
-                const trackedOald9 = Hazuki_DEBUG.trackFunction(oald9, 'oald9');
-                if (Hazuki_DEBUG.functionStats['oald9'] === undefined) {
-                    trackedOald9();
-                } else {
-                    console.warn('[Hazuki] oald9() already called.')
-                }
+            oald9();
+            oald9_collapse();
 
-                const trackedOald9Collapse = Hazuki_DEBUG.trackFunction(oald9_collapse, 'oald9_collapse');
-                if (Hazuki_DEBUG.functionStats['oald9_collapse'] === undefined) {
-                    trackedOald9Collapse();
-                } else {
-                    console.warn('[Hazuki] oald9_collapse() already called.')
-                }
-
-                if (Hazuki_DEBUG.MACOS_IPAD_SIM) {
-                    const trackedAddNoteCopyButton = Hazuki_DEBUG.trackFunction(addNoteCopyButton, 'addNoteCopyButton');
-                    trackedAddNoteCopyButton();
-                }
-            };
-
-            const trackedOald9ScriptInit = Hazuki_DEBUG.trackFunction(oald9ScriptInit, 'oald9ScriptInit');
-            trackedOald9ScriptInit();
+            modifyElements();
+            if (Hazuki_DEBUG.EUDIC && Hazuki_DEBUG.MACOS_IPAD_SIM) {
+                addNoteCopyButton();
+            }
         }
     });
 })();
@@ -1261,186 +1244,198 @@ function pos_tabs() {
     }
 }
 
-/// click head word to toggle trans
-(function(){
-    var i = 0, es = document.querySelectorAll('.webtop-g > .h'), l = es.length;
-    for (; i < l; i++) es[i].setAttribute('onclick', 'toggle_chn("word")')
-})();
+// post-processing functions
+function modifyElements() {
+    /// click head word to toggle trans
+    (function () {
+        var i = 0, es = document.querySelectorAll('.webtop-g > .h'), l = es.length;
+        for (; i < l; i++) es[i].setAttribute('onclick', 'toggle_chn("word")')
+    })();
 
-/// modify internal labels
-(function(){
-    var i, l, c, t, xr, xrs = document.getElementsByClassName('xr-gs');
-    if (!xrs || !xrs.length) return;
+    /// modify internal labels
+    (function () {
+        var i, l, c, t, xr, xrs = document.getElementsByClassName('xr-gs');
+        if (!xrs || !xrs.length) return;
 
-    for (i = 0, l = xrs.length; i < l; i++) {
-        xr = xrs[i];
-        if (xr.getAttribute('xref_type') !== 'internal') continue;
-        c = xr.children[0];
-        if (!c || !c.classList.contains('prefix')) continue;
-        t = c.innerText.toLowerCase();
-        switch (t) {
-            case 'synonym': t = 'syn'; xr.className = 'xr-gs syn'; break;
-            case 'see related entries:': t = 'related'; xr.className = 'xr-gs related'; break;
-            case 'see idioms in': t = 'idioms in'; xr.className = 'xr-gs isioms-in'; break;
-            case 'opposite': t = 'opp'; xr.className = 'xr-gs opp'; break; // `load`
-            case 'see also': t = 'also'; xr.className = 'xr-gs also'; break;
-            case 'language bank at': t = 'lang bank'; xr.className = 'xr-gs bank'; break; // `essential`
-            case 'past tense, past participle of': t = 'pst, pp'; xr.className = 'xr-gs ppp'; break; // `fried`
-            case 'express yourself at': t = 'express u'; xr.className = 'xr-gs express'; break; // `ask`
-            case 'compare': xr.className = 'xr-gs compare'; break;
-            case 'note at': xr.className = 'xr-gs note'; break; // `need`
-            case '=': xr.className = 'xr-gs equal'; break;
+        for (i = 0, l = xrs.length; i < l; i++) {
+            xr = xrs[i];
+            if (xr.getAttribute('xref_type') !== 'internal') continue;
+            c = xr.children[0];
+            if (!c || !c.classList.contains('prefix')) continue;
+            t = c.innerText.toLowerCase();
+            switch (t) {
+                case 'synonym': t = 'syn'; xr.className = 'xr-gs syn'; break;
+                case 'see related entries:': t = 'related'; xr.className = 'xr-gs related'; break;
+                case 'see idioms in': t = 'idioms in'; xr.className = 'xr-gs isioms-in'; break;
+                case 'opposite': t = 'opp'; xr.className = 'xr-gs opp'; break; // `load`
+                case 'see also': t = 'also'; xr.className = 'xr-gs also'; break;
+                case 'language bank at': t = 'lang bank'; xr.className = 'xr-gs bank'; break; // `essential`
+                case 'past tense, past participle of': t = 'pst, pp'; xr.className = 'xr-gs ppp'; break; // `fried`
+                case 'express yourself at': t = 'express u'; xr.className = 'xr-gs express'; break; // `ask`
+                case 'compare': xr.className = 'xr-gs compare'; break;
+                case 'note at': xr.className = 'xr-gs note'; break; // `need`
+                case '=': xr.className = 'xr-gs equal'; break;
+            }
+            if (t.substr(0, 8) == 'related ') { // `give away`
+                // c.innerText = '∞' + t.substr(7);
+                xr.className = 'xr-gs related related-2';
+            } else c.innerText = t;
         }
-        if (t.substr(0,8)=='related ') { // `give away`
-            // c.innerText = '∞' + t.substr(7);
-            xr.className = 'xr-gs related related-2';
-        } else c.innerText = t;
-    }
-})();
+    })();
 
-Array.prototype.filter.call(document.querySelectorAll('.x-g .cf, .sn-g .cf, .sn-g>.use, .sn-g>.v-gs, .top-g>.use, .idm'), function(e){
-    e.innerHTML = e.innerHTML
-        .replace(/something/g, 'sth.')
-        .replace(/somebody/g, 'sb.')
-        .replace('not usually used in', 'n.uu.')
-        .replace('not used in', 'n.u.')
-        .replace('only used in', 'o.u.')
-        .replace('usually used in', 'u.u.') // `face`: .use, 'usually used in negative sentences and questions'
-        .replace('used in', 'u.')
-        .replace('not usually used with', 'n.uu+')
-        .replace('not used with', 'n.u+')
-        .replace('only used with', 'o.u+')
-        .replace('usually used with', 'u.u+')
-        .replace('usually in ', 'usl. ')
-        .replace('usually with ', 'usl+ ')
-        .replace('used with ', 'u+ ')
-        .replace('used after ', 'aft. ') // `come`
-        .replace('often in ', 'ofn.') // `skin`
-        .replace('especially', 'esp.')
-        .replace('the perfect tenses', '<i>pft.</i>') // `be`: .use, 'only used in the perfect tenses'
-        .replace('the passive', '<i>psv.</i>') // `take`: .use, 'or in the passive'
-        .replace('the progressive tenses', '<i>pst.</i>') // `have`: .use, 'not used in the progressive tenses'
-        .replace('past participle', '<i>p.p.</i>')
-        .replace('past simple', '<i>p.</i>')
-        .replace('prespart', '<i>-ing.</i>')
-        .replace('negative sentences', '<i>neg.</i>')
-        .replace('<span class="wrap">(</span>','<span class="wrap">⟨</span>') // .sn-g>.use, .sn-g>.v-gs, , .top-g>.use
-        .replace('<span class="wrap">)</span>','<span class="wrap">⟩</span>')
-});
+    Array.prototype.filter.call(document.querySelectorAll('.x-g .cf, .sn-g .cf, .sn-g>.use, .sn-g>.v-gs, .top-g>.use, .idm'), function (e) {
+        e.innerHTML = e.innerHTML
+            .replace(/something/g, 'sth.')
+            .replace(/somebody/g, 'sb.')
+            .replace('not usually used in', 'n.uu.')
+            .replace('not used in', 'n.u.')
+            .replace('only used in', 'o.u.')
+            .replace('usually used in', 'u.u.') // `face`: .use, 'usually used in negative sentences and questions'
+            .replace('used in', 'u.')
+            .replace('not usually used with', 'n.uu+')
+            .replace('not used with', 'n.u+')
+            .replace('only used with', 'o.u+')
+            .replace('usually used with', 'u.u+')
+            .replace('usually in ', 'usl. ')
+            .replace('usually with ', 'usl+ ')
+            .replace('used with ', 'u+ ')
+            .replace('used after ', 'aft. ') // `come`
+            .replace('often in ', 'ofn.') // `skin`
+            .replace('especially', 'esp.')
+            .replace('the perfect tenses', '<i>pft.</i>') // `be`: .use, 'only used in the perfect tenses'
+            .replace('the passive', '<i>psv.</i>') // `take`: .use, 'or in the passive'
+            .replace('the progressive tenses', '<i>pst.</i>') // `have`: .use, 'not used in the progressive tenses'
+            .replace('past participle', '<i>p.p.</i>')
+            .replace('past simple', '<i>p.</i>')
+            .replace('prespart', '<i>-ing.</i>')
+            .replace('negative sentences', '<i>neg.</i>')
+            .replace('<span class="wrap">(</span>', '<span class="wrap">⟨</span>') // .sn-g>.use, .sn-g>.v-gs, , .top-g>.use
+            .replace('<span class="wrap">)</span>', '<span class="wrap">⟩</span>')
+    });
 
-/// modify unbox header title
-Array.prototype.filter.call(document.querySelectorAll('.heading'), function(e){
-    var s = e.innerHTML.replace(/<.*\/span>/g, '').trim();
-    // console.log(s + ' @ ' + e.innerHTML);
-    switch(s) {
-        case 'Oxford Collocations Dictionary': e.innerHTML = 'Collocations'; break;
-        case 'Grammar Point': e.innerHTML = 'Grammar'; break; // `can`
-        case 'Which Word?': e.innerHTML = 'Which ?'; break; // `deep`
-        case 'Synonyms': e.innerHTML = 'Synonyms'; break; // `drive`
-        case 'AWL Collocations': e.innerHTML = 'Collocations <i class="o8">⟨AWL⟩</i>'; break; // NOT FOUND
-        case 'Collocations': e.innerHTML = e.innerHTML.indexOf('O8E')>=0 ? 'Collocations <i class="o8">⟨ℰ8⟩</i>' : 'Collocations'; break; // `home`,`pension`,`driving`
-        case 'Language Bank': e.innerHTML = 'Lang Bank'; break; // `possible`
-        case 'Vocabulary Building': e.innerHTML = 'Vocabulary'; break; // `make`,`face`
-        case 'More About': e.innerHTML = 'About +'; break; // `waiter`
-        case 'More Like This': e.innerHTML = 'Like This +'; break; // `face`
-        case 'Extra examples': e.innerHTML = 'Examples'; break;
-        case 'Express Yourself': e.innerHTML = 'Express U'; break; // `possible`
-        case 'Word Origin': e.innerHTML = 'Origin'; break;
-        case 'Word Family': e.innerHTML = 'Family'; break; // `deep`
-        case 'British/​American': e.innerHTML = e.innerHTML.indexOf('O8E')>=0 ? 'BrE/AmE <i class="o8">⟨ℰ8⟩</i>' : 'BrE/AmE'; break; // `have`,`rent`
-    }
+    /// modify unbox header title
+    Array.prototype.filter.call(document.querySelectorAll('.heading'), function (e) {
+        var s = e.innerHTML.replace(/<.*\/span>/g, '').trim();
+        // console.log(s + ' @ ' + e.innerHTML);
+        switch (s) {
+            case 'Oxford Collocations Dictionary': e.innerHTML = 'Collocations'; break;
+            case 'Grammar Point': e.innerHTML = 'Grammar'; break; // `can`
+            case 'Which Word?': e.innerHTML = 'Which ?'; break; // `deep`
+            case 'Synonyms': e.innerHTML = 'Synonyms'; break; // `drive`
+            case 'AWL Collocations': e.innerHTML = 'Collocations <i class="o8">⟨AWL⟩</i>'; break; // NOT FOUND
+            case 'Collocations': e.innerHTML = e.innerHTML.indexOf('O8E') >= 0 ? 'Collocations <i class="o8">⟨ℰ8⟩</i>' : 'Collocations'; break; // `home`,`pension`,`driving`
+            case 'Language Bank': e.innerHTML = 'Lang Bank'; break; // `possible`
+            case 'Vocabulary Building': e.innerHTML = 'Vocabulary'; break; // `make`,`face`
+            case 'More About': e.innerHTML = 'About +'; break; // `waiter`
+            case 'More Like This': e.innerHTML = 'Like This +'; break; // `face`
+            case 'Extra examples': e.innerHTML = 'Examples'; break;
+            case 'Express Yourself': e.innerHTML = 'Express U'; break; // `possible`
+            case 'Word Origin': e.innerHTML = 'Origin'; break;
+            case 'Word Family': e.innerHTML = 'Family'; break; // `deep`
+            case 'British/​American': e.innerHTML = e.innerHTML.indexOf('O8E') >= 0 ? 'BrE/AmE <i class="o8">⟨ℰ8⟩</i>' : 'BrE/AmE'; break; // `have`,`rent`
+        }
 
-    // 'Oxford Collocations Dictionary'
-    // 'Grammar Point语法说明'
-    // 'Which Word?词语辨析'
-    // 'Synonyms同义词辨析'
-    // 'Collocations词语搭配'
-    // 'Language Bank用语库'
-    // 'Vocabulary Building词汇扩充'
-    // 'More About补充说明'
-});
+        // 'Oxford Collocations Dictionary'
+        // 'Grammar Point语法说明'
+        // 'Which Word?词语辨析'
+        // 'Synonyms同义词辨析'
+        // 'Collocations词语搭配'
+        // 'Language Bank用语库'
+        // 'Vocabulary Building词汇扩充'
+        // 'More About补充说明'
+    });
 
-/// hide sounding example's leader ornaments
-Array.prototype.filter.call(document.querySelectorAll('.OALECD_audio'), function(x){
-    var a = x, b;
-    x = x.previousSibling; // #text
-    if (!x) return;
-    if (!x.tagName) x = x.previousSibling;
-    if (x && x.className == 'x') {
-        x.className = 'x _orn';
-        b = a.cloneNode(true);
-        a.parentElement.removeChild(a);
-        x.insertBefore(b, x.firstChild);
-    }
-});
+    /// hide sounding example's leader ornaments
+    Array.prototype.filter.call(document.querySelectorAll('.OALECD_audio'), function (x) {
+        var a = x, b;
+        x = x.previousSibling; // #text
+        if (!x) return;
+        if (!x.tagName) x = x.previousSibling;
+        if (x && x.className == 'x') {
+            x.className = 'x _orn';
+            b = a.cloneNode(true);
+            a.parentElement.removeChild(a);
+            x.insertBefore(b, x.firstChild);
+        }
+    });
 
-Array.prototype.filter.call(document.querySelectorAll('.x-g > .x'), function(e){
-    if (e.hasAttribute('bred')) return;
-    e.setAttribute('bred', 1);
-    var p = document.createElement('p');
-    p.className = '_br';
-    e.parentNode.insertBefore(p, e);
-});
+    Array.prototype.filter.call(document.querySelectorAll('.x-g > .x'), function (e) {
+        if (e.hasAttribute('bred')) return;
+        e.setAttribute('bred', 1);
+        var p = document.createElement('p');
+        p.className = '_br';
+        e.parentNode.insertBefore(p, e);
+    });
 
-// `rent`
-Array.prototype.filter.call(document.querySelectorAll('.collapse[title="British/American"]'), function(col){
-    Array.prototype.filter.call(col.querySelectorAll('.bullet .li'), function(li){
-        var h = li.innerHTML;
-        if (h.substr(-1) == '.') li.innerHTML = h.substr(0,h.length-1)
-    })
-});
+    // `rent`
+    Array.prototype.filter.call(document.querySelectorAll('.collapse[title="British/American"]'), function (col) {
+        Array.prototype.filter.call(col.querySelectorAll('.bullet .li'), function (li) {
+            var h = li.innerHTML;
+            if (h.substr(-1) == '.') li.innerHTML = h.substr(0, h.length - 1)
+        })
+    });
 
-// `can`#GrammarPoint .wx
-Array.prototype.filter.call(document.querySelectorAll('.x-g > .wx'), function(e){
-    e.parentNode.classList.add('_wx');
-});
+    // Replace non-standard characters
+    Array.prototype.filter.call(document.querySelectorAll('.collapse[title="Extra examples"] .x-g > .x'), function (e) {
+        e.innerHTML = e.innerHTML
+        .replace(/\u0091/g, '‘')
+        .replace(/\u0092/g, '’')
+        // .replace(/\u0093/g, '“')
+        // .replace(/\u0094/g, '”');
+    });
 
-/// modify tags
-// TODO: .subj: `determiner`,`markup`
-Array.prototype.filter.call(document.querySelectorAll('.geo, .reg, .gram, .ei'), function(e){
-    if (e.className == 'reg' && e.innerHTML.indexOf('taboo') >=0) e.classList.add('taboo'); // `jack`,`tool`
-    e.innerText = e.innerText
-        .replace('Australian English', 'AuE')
-        .replace('North American English', 'NAmE')
-        .replace('American English', 'AmE')
-        .replace('US English', 'usE')
-        .replace('British English', 'BrE')
-        .replace('Indian English', 'IndE')
-        .replace('Scottish English', 'ScoE')
-        .replace('New Zealand English', 'NzE') // `swag`
-        .replace('French', 'Fr.')
-        .replace('especially', 'esp.')
-        .replace('both', 'both') // `driving`
-        .replace('formal', 'fm.')
-        .replace('informal', 'infm.')
-        .replace('slang', 'sl.')
-        .replace('specialist', 'specl.')
-        .replace('old use', 'old use')
-        .replace('old-fashioned', 'old-f')
-        .replace('non-standard', 'no-std')
-        .replace('frequent', 'freq.') // <less frequent>
-        .replace('sometimes', 'stms.') // <sometimes disapproving>
-        .replace('disapproving', 'dsp.')
-        .replace('figurative', 'figu.')
-        .replace('approving', 'appr.')
-        .replace('saying', 'sai.')
-        .replace('humorous', 'humo.')
-        .replace('literary', 'liter.')
-        .replace('not before', 'n.b.') // `due`
-        .replace('only before', 'o.b.')
-        .replace('only after', 'o.f.')
-        .replace('only', 'onl.')
-        .replace('usually before', 'u.b.')
-        .replace('usually after', 'u.f.')
-        .replace('usually', 'usl.')
-        .replace('often', 'ofn.')
-        .replace('rather', 'rar.') // `drive`#Collocations,#Synonyms,#Culture
-        .replace('passive', 'psv.')
-        .replace('uncountable', 'U')
-        .replace('countable', 'C')
-        .replace('intransitive', 'I')
-        .replace('transitive', 'T')
-        .replace(/singular/g, 'sin.') // `army`
-        .replace(/plural/g, 'pl.')
-        .replace(' or ', ' / ');
-});
+    // `can`#GrammarPoint .wx
+    Array.prototype.filter.call(document.querySelectorAll('.x-g > .wx'), function (e) {
+        e.parentNode.classList.add('_wx');
+    });
+
+    /// modify tags
+    // TODO: .subj: `determiner`,`markup`
+    Array.prototype.filter.call(document.querySelectorAll('.geo, .reg, .gram, .ei'), function (e) {
+        if (e.className == 'reg' && e.innerHTML.indexOf('taboo') >= 0) e.classList.add('taboo'); // `jack`,`tool`
+        e.innerText = e.innerText
+            .replace('Australian English', 'AuE')
+            .replace('North American English', 'NAmE')
+            .replace('American English', 'AmE')
+            .replace('US English', 'usE')
+            .replace('British English', 'BrE')
+            .replace('Indian English', 'IndE')
+            .replace('Scottish English', 'ScoE')
+            .replace('New Zealand English', 'NzE') // `swag`
+            .replace('French', 'Fr.')
+            .replace('especially', 'esp.')
+            .replace('both', 'both') // `driving`
+            .replace('formal', 'fm.')
+            .replace('informal', 'infm.')
+            .replace('slang', 'sl.')
+            .replace('specialist', 'specl.')
+            .replace('old use', 'old use')
+            .replace('old-fashioned', 'old-f')
+            .replace('non-standard', 'no-std')
+            .replace('frequent', 'freq.') // <less frequent>
+            .replace('sometimes', 'stms.') // <sometimes disapproving>
+            .replace('disapproving', 'dsp.')
+            .replace('figurative', 'figu.')
+            .replace('approving', 'appr.')
+            .replace('saying', 'sai.')
+            .replace('humorous', 'humo.')
+            .replace('literary', 'liter.')
+            .replace('not before', 'n.b.') // `due`
+            .replace('only before', 'o.b.')
+            .replace('only after', 'o.f.')
+            .replace('only', 'onl.')
+            .replace('usually before', 'u.b.')
+            .replace('usually after', 'u.f.')
+            .replace('usually', 'usl.')
+            .replace('often', 'ofn.')
+            .replace('rather', 'rar.') // `drive`#Collocations,#Synonyms,#Culture
+            .replace('passive', 'psv.')
+            .replace('uncountable', 'U')
+            .replace('countable', 'C')
+            .replace('intransitive', 'I')
+            .replace('transitive', 'T')
+            .replace(/singular/g, 'sin.') // `army`
+            .replace(/plural/g, 'pl.')
+            .replace(' or ', ' / ');
+    });
+}
