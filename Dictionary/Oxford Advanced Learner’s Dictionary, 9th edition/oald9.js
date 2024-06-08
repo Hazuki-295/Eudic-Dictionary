@@ -3,7 +3,7 @@ setTimeout(function(){var e=document.getElementById('wordInfoHead');e&&e.remove(
 
 ////////////////////////////////== Settings ==\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 /// @个性设置: 默认例句发音: 1:英式, 2:美式
-var _OALD9_DEFAULT_PRON = 1;
+var _OALD9_DEFAULT_PRON = 2;
 
 /// @个性设置: O9 滑出视野后自动隐藏词性切换按钮: 1:开启, 0:关闭
 var _OALD9_AUTO_TABSHIDE_ON = 1;

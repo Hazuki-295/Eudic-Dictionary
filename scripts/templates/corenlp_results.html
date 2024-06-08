@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CoreNLP Visualizer</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://nlp.stanford.edu/js/brat/style-vis.css">
+    <link rel="stylesheet" href="https://corenlp.run/corenlp-brat.css?v4.5.5">
+</head>
+<body>
+    <div class="container">
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            {% for key, (label, _) in results.items() %}
+            <li class="nav-item">
+                <a class="nav-link {% if loop.first %}active{% endif %}" id="{{ key }}-tab" data-toggle="tab" href="#{{ key }}" role="tab" aria-controls="{{ key }}" aria-selected="true">{{ label }}</a>
+            </li>
+            {% endfor %}
+        </ul>
+        <div class="tab-content" id="myTabContent">
+            {% for key, (label, content) in results.items() %}
+            <div class="tab-pane fade {% if loop.first %}show active{% endif %}" id="{{ key }}" role="tabpanel" aria-labelledby="{{ key }}-tab">
+                {{ content | safe }}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

@@ -7,4 +7,6 @@
 /debug/*.css
 /debug/*.js
 
+!scripts/**/*
+
 !/README.md
