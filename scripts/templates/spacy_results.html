@@ -1,31 +1,151 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>displaCy Visualizer</title>
+    <!-- JQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <!-- Bootstrap -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap-theme.min.css">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- DisplaCy CSS -->
     <link rel="stylesheet" href="https://explosion-demos.netlify.app/assets/css/style.css?v4.0">
-    <link rel="stylesheet" href="https://explosion-demos.netlify.app/assets/css/demos.css?v2.0">
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <style>
+        [data-demo="displacy"] .d-main {
+            color: #fff;
+            background-color: #2f3029;
+        }
+
+        [data-demo="displacy"] .d-scroller {
+            background: radial-gradient(ellipse at 0 50%, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0) 75%) 0 center, radial-gradient(ellipse at 100% 50%, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0) 75%) 100% center;
+            background-attachment: scroll, scroll;
+            background-repeat: no-repeat;
+            background-size: 25px 100%, 25px 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            position: relative;
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            -webkit-box-orient: horizontal;
+            -webkit-box-direction: normal;
+            -ms-flex-flow: row nowrap;
+            flex-flow: row nowrap
+        }
+
+        [data-demo="displacy"] .d-scroller:after,
+        [data-demo="displacy"] .d-scroller:before {
+            content: "";
+            width: 50px;
+            z-index: -10;
+            -webkit-box-flex: 0;
+            -ms-flex: 0 0 50px;
+            flex: 0 0 50px;
+            background: #2f3029
+        }
+
+        [data-demo="displacy"] svg {
+            overflow: visible;
+            background: transparent !important;
+            color: rgb(245, 244, 240) !important;
+        }
+
+        [data-demo="displacy"] .d-label,
+        [data-demo="displacy"] .displacy-token {
+            font-size: 1.1rem
+        }
+
+        [data-demo="displacy"] .d-tag,
+        [data-demo="displacy"] .displacy-tag {
+            font: 1rem "Hack", Consolas, "Andale Mono", Menlo, Monaco, Courier, monospace;
+            color: #a6e22d
+        }
+
+        [data-demo="displacy"] .d-arc,
+        [data-demo="displacy"] .displacy-arc {
+            color: #87908a
+        }
+
+        [data-demo="displacy"] [data-displacy-tag^="N"] {
+            color: #fd9720
+        }
+
+        [data-demo="displacy"] [data-displacy-tag^="V"] {
+            color: #e00084
+        }
+
+        [data-demo="displacy"] [data-displacy-tag^="A"] {
+            color: #8e7dff
+        }
+
+        [data-demo="displacy"] [data-displacy-tag^="PUNCT"] {
+            color: #87908a
+        }
+
+        [data-demo="displacy"] [data-displacy-tag^=","] {
+            color: #87908a
+        }
+    </style>
 </head>
+
 <body>
     <div class="container">
         <ul class="nav nav-tabs" id="myTab" role="tablist">
-            {% for key, (label, _) in results.items() %}
+            {% for key, (label, svg_content) in svg_data.items() %}
             <li class="nav-item">
-                <a class="nav-link {% if loop.first %}active{% endif %}" id="{{ key }}-tab" data-toggle="tab" href="#{{ key }}" role="tab" aria-controls="{{ key }}" aria-selected="true">{{ label }}</a>
+                <a class="nav-link {% if loop.first %}active{% endif %}" id="{{ key }}-tab" data-toggle="tab"
+                    href="#{{ key }}" role="tab" aria-controls="{{ key }}" aria-selected="true">{{ label }}</a>
             </li>
             {% endfor %}
         </ul>
         <div class="tab-content" id="myTabContent">
-            {% for key, (label, content) in results.items() %}
-            <div class="tab-pane fade {% if loop.first %}show active{% endif %}" id="{{ key }}" role="tabpanel" aria-labelledby="{{ key }}-tab">
-                {{ content | safe }}
+            {% for key, (label, svg_content) in svg_data.items() %}
+            <div class="tab-pane fade {% if loop.first %}show active{% endif %}" id="{{ key }}" role="tabpanel"
+                aria-labelledby="{{ key }}-tab">
+                <main class="l-main">
+                    <div class="l-content">
+                        <article data-demo="displacy">
+                            <section class="d-main u-t-md">
+                                <div class="d-scroller">
+                                    <div id="svg-container" class="svg-wrapper {{ key }}">
+                                        <!-- The SVG content is inserted here -->
+                                        {{ svg_content | safe }}
+                                    </div>
+                                </div>
+                            </section>
+                        </article>
+                    </div>
+                </main>
             </div>
             {% endfor %}
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Append each arrowhead to the end of the SVG to ensure they are on top
+            const svgs = document.querySelectorAll('svg');
+            svgs.forEach(svg => {
+                const arrowheadContainer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                arrowheadContainer.setAttribute('class', 'arrowhead-container');
+                svg.appendChild(arrowheadContainer);
+
+                const arrowheads = svg.querySelectorAll('.displacy-arrowhead');
+                arrowheads.forEach(arrowhead => {
+                    arrowheadContainer.appendChild(arrowhead);
+                });
+            });
+
+            // Set the 'data-displacy-tag' attribute based on the inner text of the element
+            const elements = document.querySelectorAll('.displacy-tag');
+            elements.forEach(element => {
+                const text = element.textContent.trim();
+                element.setAttribute('data-displacy-tag', text);
+            });
+        });
+    </script>
 </body>
+
 </html>

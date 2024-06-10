@@ -8,5 +8,6 @@
 /debug/*.js
 
 !scripts/**/*
+scripts/**/*.svg
 
 !/README.md
