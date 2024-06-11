@@ -20,13 +20,24 @@
 
     <style>
         html {
-            font-size: 16px
+            font-size: 16px;
+            overflow: hidden;
         }
 
         @media (max-width: 51em) {
             html {
                 font-size: 13px
             }
+        }
+
+        .nav-tabs {
+            position: fixed;
+            top: 0;
+            background-color: white;
+        }
+
+        .tab-content {
+            overflow-y: auto;
         }
 
         .nav-tabs a {
@@ -87,6 +98,21 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", () => {
+            // Initialize the Brat visualizer
+            var navTabs = document.querySelector('.nav-tabs');
+            var tabContent = document.querySelector('.tab-content');
+
+            function adjustTabContentHeight() {
+                var navHeight = navTabs.offsetHeight;
+                tabContent.style.marginTop = navHeight + 'px';
+                tabContent.style.height = 'calc(100vh - ' + navHeight + 'px)';
+            }
+
+            adjustTabContentHeight();
+
+            window.addEventListener('resize', adjustTabContentHeight);
+
+            // Set the SVG viewBox
             const svgElements = document.querySelectorAll('svg');
             svgElements.forEach(svg => {
                 const backgroundElement = svg.querySelector('g.background rect');
