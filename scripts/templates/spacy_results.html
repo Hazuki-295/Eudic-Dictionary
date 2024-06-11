@@ -9,47 +9,47 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap-theme.min.css">
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <!-- DisplaCy CSS -->
-    <link rel="stylesheet" href="https://explosion-demos.netlify.app/assets/css/style.css?v4.0">
+    <!-- Popper -->
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <!-- DisplaCy -->
+    <link rel="stylesheet" href="https://explosion-demos.netlify.app/assets/css/style.css?v4.0">
+
     <style>
+        .container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 0 !important;
+            max-width: 100% !important;
+        }
+
+        .container .tab-content {
+            flex-grow: 1;
+            overflow: auto;
+        }
+
+        .container div,
+        .container section,
+        .container article {
+            height: 100%;
+        }
+
         [data-demo="displacy"] .d-main {
             color: #fff;
             background-color: #2f3029;
         }
 
         [data-demo="displacy"] .d-scroller {
-            background: radial-gradient(ellipse at 0 50%, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0) 75%) 0 center, radial-gradient(ellipse at 100% 50%, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0) 75%) 100% center;
-            background-attachment: scroll, scroll;
-            background-repeat: no-repeat;
-            background-size: 25px 100%, 25px 100%;
             overflow-x: auto;
             overflow-y: hidden;
-            position: relative;
-            display: -webkit-box;
-            display: -ms-flexbox;
-            display: flex;
-            -webkit-box-orient: horizontal;
-            -webkit-box-direction: normal;
-            -ms-flex-flow: row nowrap;
-            flex-flow: row nowrap
-        }
-
-        [data-demo="displacy"] .d-scroller:after,
-        [data-demo="displacy"] .d-scroller:before {
-            content: "";
-            width: 50px;
-            z-index: -10;
-            -webkit-box-flex: 0;
-            -ms-flex: 0 0 50px;
-            flex: 0 0 50px;
-            background: #2f3029
         }
 
         [data-demo="displacy"] svg {
             overflow: visible;
             background: transparent !important;
             color: rgb(245, 244, 240) !important;
+            height: 100vh !important;
+            padding: 0 50px;
         }
 
         [data-demo="displacy"] .d-label,
@@ -104,20 +104,18 @@
             {% for key, (label, svg_content) in svg_data.items() %}
             <div class="tab-pane fade {% if loop.first %}show active{% endif %}" id="{{ key }}" role="tabpanel"
                 aria-labelledby="{{ key }}-tab">
-                <main class="l-main">
-                    <div class="l-content">
-                        <article data-demo="displacy">
-                            <section class="d-main u-t-md">
-                                <div class="d-scroller">
-                                    <div id="svg-container" class="svg-wrapper {{ key }}">
-                                        <!-- The SVG content is inserted here -->
-                                        {{ svg_content | safe }}
-                                    </div>
+                <div class="l-content">
+                    <article data-demo="displacy">
+                        <section class="d-main u-t-md">
+                            <div class="d-scroller">
+                                <div id="svg-container" class="svg-wrapper {{ key }}">
+                                    <!-- The SVG content is inserted here -->
+                                    {{ svg_content | safe }}
                                 </div>
-                            </section>
-                        </article>
-                    </div>
-                </main>
+                            </div>
+                        </section>
+                    </article>
+                </div>
             </div>
             {% endfor %}
         </div>
@@ -126,8 +124,8 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             // Append each arrowhead to the end of the SVG to ensure they are on top
-            const svgs = document.querySelectorAll('svg');
-            svgs.forEach(svg => {
+            const svgElements = document.querySelectorAll('svg');
+            svgElements.forEach(svg => {
                 const arrowheadContainer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
                 arrowheadContainer.setAttribute('class', 'arrowhead-container');
                 svg.appendChild(arrowheadContainer);
@@ -136,6 +134,12 @@
                 arrowheads.forEach(arrowhead => {
                     arrowheadContainer.appendChild(arrowhead);
                 });
+
+                const svgWidth = svg.getAttribute("width");
+                const svgHeight = svg.getAttribute("height");
+
+                // Set the viewBox to scale the SVG
+                svg.setAttribute('viewBox', `0 0 ${svgWidth} ${svgHeight}`);
             });
 
             // Set the 'data-displacy-tag' attribute based on the inner text of the element

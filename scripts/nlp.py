@@ -9,6 +9,8 @@ from flask import Flask, request, render_template
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 app = Flask(__name__)
 
@@ -68,6 +70,7 @@ class CoreNLPDriver():
         
         self.text_box = self.driver.find_element(By.ID, 'text')
         self.submit_button = self.driver.find_element(By.ID, "submit")
+        self.loading_element = self.driver.find_element(By.ID, "loading")
 
     def process_input(self, input_data):
         """Processes the input text through the CoreNLP interface."""
@@ -77,9 +80,10 @@ class CoreNLPDriver():
             self.submit_button.click()
         except Exception as e:
             print(f"Error during processing: {e}")
+            self.reinitialize_session()
         
         # Wait for the response to be generated
-        self.driver.implicitly_wait(2)
+        WebDriverWait(self.driver, 10).until(EC.invisibility_of_element_located(self.loading_element))
         
         results = {}
         for key, label in self.annotators.items():
@@ -91,6 +95,12 @@ class CoreNLPDriver():
                 results[key] = (label, f"Error: {e}")
         return results
     
+    def reinitialize_session(self):
+        print("Reinitializing session...")
+        self.close()
+        self.driver = self.initialize_driver()
+        self.setup_corenlp_interface()
+        
     def close(self):
         self.driver.quit()
 
@@ -99,7 +109,12 @@ def cleanup_resources():
     core_nlp_driver.close()
 
 def handle_signal(sig, frame):
-    print(f"Received signal: {sig}. Exiting...")
+    signal_name = {
+        signal.SIGINT: "SIGINT (Interrupt from keyboard)",
+        signal.SIGTERM: "SIGTERM (Termination signal)",
+    }.get(sig, f"Unknown signal ({sig})")
+    
+    print(f"\nReceived {signal_name}. Exiting...")
     cleanup_resources()
     sys.exit(0)
 
@@ -111,14 +126,19 @@ default_input = 'The quick brown fox jumped over the lazy dog.'
 
 def get_input_data():
     # Priority: 1. Query parameter 'input' 2. POST data 3. Default input
-    return (request.args.get('input') or
-            request.form.get('input') or
-            request.data.decode() or
-            default_input)
+    input_data = (request.args.get('input') or
+                  request.form.get('input') or
+                  request.data.decode())
+    if not input_data:
+        print("No input provided, using default.")
+        input_data = default_input
+    return input_data
 
 @app.route('/spaCy', methods=['GET', 'POST'])
 def spacy_request():
     input_data = get_input_data()
+    if input_data != default_input:
+        print(f"Received input data for spaCy: {input_data}")
     spacy_driver.process_input(input_data)
     svg_data = {
     'deps-merged': ('Dependency (Merge Phrases)', read_svg(spacy_driver.svg_filenames['dependency_tree_merged'])),
@@ -129,6 +149,8 @@ def spacy_request():
 @app.route('/CoreNLP', methods=['GET', 'POST'])
 def core_nlp_request():
     input_data = get_input_data()
+    if input_data != default_input:
+        print(f"Received input data for CoreNLP: {input_data}")
     results = core_nlp_driver.process_input(input_data)
     return render_template('corenlp_results.html', results=results)
 
