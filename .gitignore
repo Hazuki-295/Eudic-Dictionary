@@ -7,8 +7,4 @@
 /debug/*.css
 /debug/*.js
 
-!scripts/**/*
-scripts/**/*.svg
-scripts/**/*.log
-
 !/README.md
