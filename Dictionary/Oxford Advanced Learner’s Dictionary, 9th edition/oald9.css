@@ -2555,6 +2555,11 @@ ol.h-g>.snippet {
     padding-left: 1.3em;
 }
 
+/* Fix the arrangement issue */
+ol.h-g > .res-g {
+    padding-left: 0;
+}
+
 .def .xr-gs {
     display: inline
 }

@@ -444,11 +444,11 @@ async function copyToClipboard(text) {
 
 function oald9_collapse() {
     // Expand all collapsible elements with the specified title
-    document.querySelectorAll('.collapse[title="Oxford Collocations Dictionary"] .heading')
+    document.querySelectorAll('.res-g .collapse[title="Word Origin"] .heading')
         .forEach(headingElement => headingElement.click());
 
-    // Definition selector
-    const definitionSelector = `${Hazuki_DEBUG.DICT_OALD9.rootElement} .def`;
+    // Definition container selector
+    const defContainerSelector = `${Hazuki_DEBUG.DICT_OALD9.rootElement} .sn-g`;
 
     // Collapsible elements selector
     const collapsibleSelector = '.x-gs, .collapse';
@@ -461,9 +461,9 @@ function oald9_collapse() {
         return button;
     }
 
-    document.querySelectorAll(definitionSelector).forEach(definition => {
-        const collapsibleElements = definition.parentElement.querySelectorAll(collapsibleSelector);
-        const autoHideCollapsible = false; // Hide by default
+    document.querySelectorAll(defContainerSelector).forEach(definitionContainer => {
+        const definition = definitionContainer.querySelector('.def');
+        if (!definition) return;
 
         // Copy Button Logic
         const copyButton = createButton('copy', function () {
@@ -475,6 +475,9 @@ function oald9_collapse() {
         definition.appendChild(copyButton);
 
         // Collapse Button Logic
+        const autoHideCollapsible = false; // Hide by default
+        const collapsibleElements = definitionContainer.querySelectorAll(collapsibleSelector);
+
         if (collapsibleElements.length > 0) {
             const collapseButton = createButton(autoHideCollapsible ? 'collapsed' : 'expanded', function () {
                 const isCollapsed = this.classList.contains('collapsed');
